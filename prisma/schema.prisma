@@ -8,26 +8,143 @@ datasource db {
 }
 
 model User {
-  id           String     @id @default(auto()) @map("_id") @db.ObjectId
-  name         String
-  username     String?     @unique
-  email        String     @unique
-  phoneNumber  String?
-  profileImage String?
+  id           String         @id @default(auto()) @map("_id") @db.ObjectId
+  email        String         @unique
   password     String
-  role         UserRole   @default(USER)
-  status       UserStatus @default(ACTIVE)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  role         UserRole       @default(STUDENT)
+  status       UserStatus     @default(ACTIVE)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  student      Student[]
+  teacher      Teacher[]
+  CourseReview CourseReview[]
+  institute    Institute[]
+  admin        Admin?
 
   @@map("Users")
 }
 
+model Student {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  email        String   @unique
+  username     String?  
+  phoneNumber  String? 
+  profileImage String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [email], references: [email])
+
+  @@map("Students")
+}
+
+model Admin {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  email        String   @unique
+  phoneNumber  String?  
+  username     String?  
+  profileImage String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [email], references: [email])
+}
+
+model Teacher {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  name              String
+  email             String   @unique
+  username          String?  
+  phoneNumber       String?  
+  profileImage      String?
+  yearsOfExperience Int?
+  locations         String?
+  about             String?
+  spicialities      String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [email], references: [email])
+  course            Course[]
+
+  @@map("Teachers")
+}
+
+model Institute {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  email           String @unique
+  phone           String?
+  address         String?
+  about           String?
+  specializations String?
+  logoUrl         String?
+  latitude        Float?
+  longitude       Float?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [email], references: [email])
+
+  course Course[]
+
+  @@map("Institutes")
+}
+
+model Category {
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  name     String   @unique
+  imageUrl String
+  Course   Course[]
+}
+
+model Course {
+  id               String         @id @default(auto()) @map("_id") @db.ObjectId
+  title            String
+  startDate        DateTime
+  endDate          DateTime
+  description      String
+  whatYouWillLearn String
+  perWeekClass     Int
+  classTime        String
+  courseHours      String
+  courseDays       String
+  level            String
+  duration         String
+  lessons          Int
+  language         String
+  price            Float
+  teacherId        String         @db.ObjectId
+  Teacher          Teacher        @relation(fields: [teacherId], references: [id])
+  categoryId       String         @db.ObjectId
+  Category         Category       @relation(fields: [categoryId], references: [id])
+  institute        Institute      @relation(fields: [instituteId], references: [id])
+  instituteId      String         @db.ObjectId
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  CourseReview     CourseReview[]
+
+  @@map("Courses")
+}
+
+model CourseReview {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  courseId  String   @db.ObjectId
+  course    Course   @relation(fields: [courseId], references: [id])
+  rating    Int
+  review    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("CourseReviews")
+}
+
 enum UserRole {
-  ADMIN
+  STUDENT
   TEACHER
+  INSTITUTE
+  ADMIN
   SUPER_ADMIN
-  USER
 }
 
 enum UserStatus {

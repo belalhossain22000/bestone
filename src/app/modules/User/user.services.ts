@@ -8,60 +8,123 @@ import { Prisma, User, UserRole, UserStatus } from "@prisma/client";
 import { userSearchAbleFields } from "./user.costant";
 import config from "../../../config";
 import httpStatus from "http-status";
+import { Request } from "express";
 
-// Create a new user in the database.
-const createUserIntoDb = async (payload: User) => {
-  const existingUser = await prisma.user.findFirst({
-    where: {
-      OR: [{ email: payload.email }, { username: payload.username }],
-    },
-  });
-
-  if (existingUser) {
-    if (existingUser.email === payload.email) {
-      throw new ApiError(
-        400,
-        `User with this email ${payload.email} already exists`
-      );
-    }
-    if (existingUser.username === payload.username) {
-      throw new ApiError(
-        400,
-        `User with this username ${payload.username} already exists`
-      );
-    }
-  }
+//*! Create a new student in the database.
+const createStudent = async (payload: any) => {
+  // hash the password
   const hashedPassword: string = await bcrypt.hash(
     payload.password,
     Number(config.bcrypt_salt_rounds)
   );
 
-  const result = await prisma.user.create({
-    data: { ...payload, password: hashedPassword },
-    select: {
-      id: true,
-      name: true,
-      username: true,
-      email: true,
-      role: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
+  // create user in the database using transaction for atomicity.
+  const result = await prisma.$transaction(async (transaction) => {
+    await transaction.user.create({
+      data: {
+        email: payload.student.email,
+        password: hashedPassword,
+        role: UserRole.STUDENT,
+      },
+    });
 
+    const student = await transaction.student.create({
+      data: payload.student,
+    });
+    return student;
+  });
+  return result;
+};
+
+//*! Create a new teacher in the database.
+
+const createTeacher = async (payload: any) => {
+  // hash the password
+  const hashedPassword: string = await bcrypt.hash(
+    payload.password,
+    Number(config.bcrypt_salt_rounds)
+  );
+
+  // create user in the database using transaction for atomicity.
+  const result = await prisma.$transaction(async (transaction) => {
+    await transaction.user.create({
+      data: {
+        email: payload.teacher.email,
+        password: hashedPassword,
+        role: UserRole.TEACHER,
+      },
+    });
+
+    const teacher = await transaction.teacher.create({
+      data: payload.teacher,
+    });
+    return teacher;
+  });
+  return result;
+};
+
+//*! Create a new admin in the database.
+
+const createAdmin = async (payload: any) => {
+  // hash the password
+  const hashedPassword: string = await bcrypt.hash(
+    payload.password,
+    Number(config.bcrypt_salt_rounds)
+  );
+
+  // create user in the database using transaction for atomicity.
+  const result = await prisma.$transaction(async (transaction) => {
+    await transaction.user.create({
+      data: {
+        email: payload.admin.email,
+        password: hashedPassword,
+        role: UserRole.ADMIN,
+      },
+    });
+
+    const admin = await transaction.admin.create({
+      data: payload.admin,
+    });
+    return admin;
+  });
+  return result;
+};
+
+//*! Create a new institute in the database.
+
+const createInstitute = async (payload: any) => {
+  // hash the password
+  const hashedPassword: string = await bcrypt.hash(
+    payload.password,
+    Number(config.bcrypt_salt_rounds)
+  );
+
+  // create user in the database using transaction for atomicity.
+  const result = await prisma.$transaction(async (transaction) => {
+    await transaction.user.create({
+      data: {
+        email: payload.institute.email,
+        password: hashedPassword,
+        role: UserRole.INSTITUTE,
+      },
+    });
+
+    const institute = await transaction.institute.create({
+      data: payload.institute,
+    });
+    return institute;
+  });
   return result;
 };
 
 // reterive all users from the database also searcing anf filetering
-const getUsersFromDb = async (
-  params: IUserFilterRequest,
-  options: IPaginationOptions
-) => {
+const getUsersFromDb = async (params: any, options: IPaginationOptions) => {
   const { page, limit, skip } = paginationHelper.calculatePagination(options);
   const { searchTerm, ...filterData } = params;
 
   const andCondions: Prisma.UserWhereInput[] = [];
 
+  //console.log(filterData);
   if (params.searchTerm) {
     andCondions.push({
       OR: userSearchAbleFields.map((field) => ({
@@ -82,11 +145,14 @@ const getUsersFromDb = async (
       })),
     });
   }
-  const whereConditons: Prisma.UserWhereInput = { AND: andCondions };
+
+  const whereConditons: Prisma.UserWhereInput =
+    andCondions.length > 0 ? { AND: andCondions } : {};
 
   const result = await prisma.user.findMany({
     where: whereConditons,
     skip,
+    take: limit,
     orderBy:
       options.sortBy && options.sortOrder
         ? {
@@ -97,22 +163,18 @@ const getUsersFromDb = async (
           },
     select: {
       id: true,
-      name: true,
-      username: true,
       email: true,
-      profileImage: true,
       role: true,
+      status: true,
       createdAt: true,
       updatedAt: true,
     },
   });
+
   const total = await prisma.user.count({
     where: whereConditons,
   });
 
-  if (!result || result.length === 0) {
-    throw new ApiError(404, "No active users found");
-  }
   return {
     meta: {
       page,
@@ -124,11 +186,14 @@ const getUsersFromDb = async (
 };
 
 // update profile by user won profile uisng token or email and id
-const updateProfile = async (user: IUser, payload: User) => {
+const updateProfile = async (req: Request) => {
+  const file = req.files;
+  const payload = JSON.parse(req.body.body);
+  console.log(file, payload);
   const userInfo = await prisma.user.findUnique({
     where: {
-      email: user.email,
-      id: user.id,
+      email: req.user.email,
+      id: req.user.id,
     },
   });
 
@@ -142,21 +207,11 @@ const updateProfile = async (user: IUser, payload: User) => {
       email: userInfo.email,
     },
     data: {
-      name: payload.name || userInfo.name,
-      username: payload.username || userInfo.username,
       email: payload.email || userInfo.email,
-      profileImage: payload.profileImage || userInfo.profileImage,
-      phoneNumber: payload.phoneNumber || userInfo.phoneNumber,
     },
     select: {
       id: true,
-      name: true,
-      username: true,
-
-      
       email: true,
-      profileImage: true,
-      phoneNumber: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -188,10 +243,7 @@ const updateUserIntoDb = async (payload: IUser, id: string) => {
     data: payload,
     select: {
       id: true,
-      name: true,
-      username: true,
       email: true,
-      profileImage: true,
       role: true,
       createdAt: true,
       updatedAt: true,
@@ -208,7 +260,10 @@ const updateUserIntoDb = async (payload: IUser, id: string) => {
 };
 
 export const userService = {
-  createUserIntoDb,
+  createStudent,
+  createInstitute,
+  createTeacher,
+  createAdmin,
   getUsersFromDb,
   updateProfile,
   updateUserIntoDb,

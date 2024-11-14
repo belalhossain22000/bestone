@@ -56,11 +56,7 @@ const getMyProfile = async (userToken: string) => {
     },
     select: {
       id: true,
-      name: true,
-      username: true,
       email: true,
-      profileImage: true,
-      phoneNumber: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -97,7 +93,7 @@ const changePassword = async (
 
   const hashedPassword = await bcrypt.hash(newPassword, 12);
 
-  const result = await prisma.user.update({
+  await prisma.user.update({
     where: {
       id: decodedToken.id,
     },
@@ -123,14 +119,13 @@ const forgotPassword = async (payload: { email: string }) => {
 
   const resetPassLink =
     config.reset_pass_link + `?userId=${userData.id}&token=${resetPassToken}`;
- 
 
   await emailSender(
     "Reset Your Password",
     userData.email,
     `
      <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-          <p>Dear ${userData.name},</p>
+          <p>Dear ${userData.email},</p>
           
           <p>We received a request to reset your password. Click the button below to reset your password:</p>
           

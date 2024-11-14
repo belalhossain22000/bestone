@@ -12,7 +12,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // upload single image
-const uploadSingle = upload.single("carImage");
+const uploadSingle = upload.single("image");
 
 // upload multiple image
 const uploadMultiple = upload.fields([

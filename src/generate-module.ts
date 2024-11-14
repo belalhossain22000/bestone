@@ -1,9 +1,14 @@
 import fs from 'fs';
 import path from 'path';
 
-// Capitalize the first letter of the module name
+// Capitalize the first letter of the string (used for folder name)
 function capitalize(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+// Lowercase the first letter of the string (used for file names)
+function lowercaseFirstLetter(text: string): string {
+  return text.charAt(0).toLowerCase() + text.slice(1);
 }
 
 // Function to generate a comment based on the file name
@@ -12,27 +17,28 @@ function getFileComment(fileName: string): string {
 
   switch (baseName) {
     case 'controller':
-      return `// ${baseName.charAt(0).toUpperCase() + baseName.slice(1)}: Handles HTTP requests for the ${baseName} module.`;
+      return `// ${baseName.charAt(0).toLocaleLowerCase() + baseName.slice(1)}: Handles HTTP requests for the ${baseName} module.`;
     case 'service':
-      return `// ${baseName.charAt(0).toUpperCase() + baseName.slice(1)}: Contains business logic for the ${baseName} module.`;
+      return `// ${baseName.charAt(0).toLocaleLowerCase() + baseName.slice(1)}: Contains business logic for the ${baseName} module.`;
     case 'routes':
-      return `// ${baseName.charAt(0).toUpperCase() + baseName.slice(1)}: Defines the routes and endpoint handlers for the ${baseName} module.`;
+      return `// ${baseName.charAt(0).toLocaleLowerCase() + baseName.slice(1)}: Defines the routes and endpoint handlers for the ${baseName} module.`;
     case 'validation':
-      return `// ${baseName.charAt(0).toUpperCase() + baseName.slice(1)}: Contains validation logic for inputs in the ${baseName} module.`;
+      return `// ${baseName.charAt(0).toLocaleLowerCase() + baseName.slice(1)}: Contains validation logic for inputs in the ${baseName} module.`;
     case 'interface':
-      return `// ${baseName.charAt(0).toUpperCase() + baseName.slice(1)}: Defines the interfaces and types for the ${baseName} module.`;
+      return `// ${baseName.charAt(0).toLocaleLowerCase() + baseName.slice(1)}: Defines the interfaces and types for the ${baseName} module.`;
     default:
-      return `// ${baseName.charAt(0).toUpperCase() + baseName.slice(1)}: Module file for the ${baseName} functionality.`;
+      return `// ${baseName.charAt(0).toLocaleLowerCase() + baseName.slice(1)}: Module file for the ${baseName} functionality.`;
   }
 }
 
 // Main function to create module directory and files
 async function createModule(moduleName: string): Promise<void> {
-  const capitalizedModuleName = capitalize(moduleName);
-  
+  const capitalizedModuleName = capitalize(moduleName); // Capitalize folder name
+  const lowercasedModuleName = lowercaseFirstLetter(moduleName); // Lowercase file names
+
   // Fix the base path to your project's root directory
   const projectRoot = path.resolve(__dirname, '..'); // Adjust this based on where your script is
-  const moduleDir = path.join(projectRoot, 'src', 'app', 'modules', capitalizedModuleName);
+  const moduleDir = path.join(projectRoot, 'src', 'app', 'modules', capitalizedModuleName); // Folder with capitalized name
 
   // Check if the module directory already exists
   if (fs.existsSync(moduleDir)) {
@@ -43,13 +49,13 @@ async function createModule(moduleName: string): Promise<void> {
   // Create the module directory
   fs.mkdirSync(moduleDir, { recursive: true });
 
-  // Files to create in the new module folder
+  // Files to create in the new module folder, with lowercase file names
   const filesToCreate = [
-    `${capitalizedModuleName}.controller.ts`,
-    `${capitalizedModuleName}.service.ts`,
-    `${capitalizedModuleName}.routes.ts`,
-    `${capitalizedModuleName}.validation.ts`,
-    `${capitalizedModuleName}.interface.ts`,
+    `${lowercasedModuleName}.controller.ts`,
+    `${lowercasedModuleName}.service.ts`,
+    `${lowercasedModuleName}.routes.ts`,
+    `${lowercasedModuleName}.validation.ts`,
+    `${lowercasedModuleName}.interface.ts`,
   ];
 
   // Create each file with a comment based on the file name

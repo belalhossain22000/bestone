@@ -6,9 +6,6 @@ import handleZodError from "../../errors/handleZodError";
 import parsePrismaValidationError from "../../errors/parsePrismaValidationError";
 import ApiError from "../../errors/ApiErrors";
 
-// TODO Replace `config.NODE_ENV` with your actual environment configuration
-
-// TODO
 const config = {
   NODE_ENV: process.env.NODE_ENV || "development",
 };
@@ -37,7 +34,14 @@ const GlobalErrorHandler = (
     message = err.message;
     errorSources = [{ type: "ApiError", details: err.message }];
   }
-  // handle prisma client validation errors
+  // Handle Prisma Known Request Error (Unique Constraint Violation)
+  else if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+    statusCode = httpStatus.CONFLICT;
+    const uniqueField = err.meta?.target;
+    message = `Unique constraint violation: The provided value for "${uniqueField}" already exists.`;
+    errorSources.push("Prisma Unique Constraint Violation Error");
+  }
+  // Handle Prisma Validation Errors
   else if (err instanceof Prisma.PrismaClientValidationError) {
     statusCode = httpStatus.BAD_REQUEST;
     message = parsePrismaValidationError(err.message);
@@ -87,7 +91,7 @@ const GlobalErrorHandler = (
     success: false,
     message,
     errorSources,
-    err,
+    errorDetails: config.NODE_ENV === "development" ? errorDetails : undefined,
     stack: config.NODE_ENV === "development" ? err?.stack : null,
   });
 };
