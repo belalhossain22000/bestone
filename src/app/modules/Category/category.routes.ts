@@ -3,15 +3,12 @@ import express from "express";
 import { CategoryController } from "./category.controller";
 import validateRequest from "../../middlewares/validateRequest";
 import { CategoryValidationSchema } from "./category.validation";
+import { fileUploader } from "../../../helpars/fileUploader";
 
 const router = express.Router();
 
 // Route to create a new category
-router.post(
-  "/",
-  validateRequest(CategoryValidationSchema),
-  CategoryController.createCategory
-);
+router.post("/", fileUploader.uploadSingle, CategoryController.createCategory);
 
 // Route to get all categories
 router.get("/", CategoryController.getAllCategories);
@@ -22,7 +19,8 @@ router.get("/:id", CategoryController.getCategoryById);
 // Route to update a category by ID
 router.put(
   "/:id",
-  validateRequest(CategoryValidationSchema),
+  fileUploader.uploadSingle,
+  // validateRequest(CategoryValidationSchema),
   CategoryController.updateCategoryById
 );
 

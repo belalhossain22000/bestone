@@ -28,9 +28,11 @@ model Student {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   name         String
   email        String   @unique
-  username     String?  
-  phoneNumber  String? 
+  username     String?
+  phoneNumber  String?
   profileImage String?
+  institute    String?
+  interest     Json?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   user         User     @relation(fields: [email], references: [email])
@@ -42,8 +44,8 @@ model Admin {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   name         String
   email        String   @unique
-  phoneNumber  String?  
-  username     String?  
+  phoneNumber  String?
+  username     String?
   profileImage String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -54,8 +56,8 @@ model Teacher {
   id                String   @id @default(auto()) @map("_id") @db.ObjectId
   name              String
   email             String   @unique
-  username          String?  
-  phoneNumber       String?  
+  username          String?
+  phoneNumber       String?
   profileImage      String?
   yearsOfExperience Int?
   locations         String?
@@ -72,7 +74,7 @@ model Teacher {
 model Institute {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   name            String
-  email           String @unique
+  email           String   @unique
   phone           String?
   address         String?
   about           String?
@@ -82,7 +84,8 @@ model Institute {
   longitude       Float?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  user            User     @relation(fields: [email], references: [email])
+  userEmail       String
+  user            User     @relation(fields: [userEmail], references: [email])
 
   course Course[]
 
@@ -98,7 +101,7 @@ model Category {
 
 model Course {
   id               String         @id @default(auto()) @map("_id") @db.ObjectId
-  title            String
+  title            String @unique
   startDate        DateTime
   endDate          DateTime
   description      String
@@ -112,12 +115,13 @@ model Course {
   lessons          Int
   language         String
   price            Float
+  thumbUrl          String
   teacherId        String         @db.ObjectId
   Teacher          Teacher        @relation(fields: [teacherId], references: [id])
   categoryId       String         @db.ObjectId
   Category         Category       @relation(fields: [categoryId], references: [id])
-  institute        Institute      @relation(fields: [instituteId], references: [id])
   instituteId      String         @db.ObjectId
+  institute        Institute      @relation(fields: [instituteId], references: [id])
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
   CourseReview     CourseReview[]

@@ -8,7 +8,7 @@ import httpStatus from "http-status";
 
 // Create a new category
 const createCategory = catchAsync(async (req: Request, res: Response) => {
-  const result = await CategoryService.createCategoryIntoDb(req.body);
+  const result = await CategoryService.createCategoryIntoDb(req);
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,
@@ -47,10 +47,7 @@ const getCategoryById = catchAsync(async (req: Request, res: Response) => {
 
 // Update a category by ID
 const updateCategoryById = catchAsync(async (req: Request, res: Response) => {
-  const result = await CategoryService.updateCategoryById(
-    req.params.id,
-    req.body
-  );
+  const result = await CategoryService.updateCategoryById(req);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,

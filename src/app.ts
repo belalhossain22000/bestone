@@ -1,5 +1,5 @@
 import express, { Application, NextFunction, Request, Response } from "express";
-
+import path from "path";
 import httpStatus from "http-status";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -22,7 +22,8 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
-
+// Serve static files from the uploads directory
+app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 // Route handler for root endpoint
 app.get("/", (req: Request, res: Response) => {
   res.send({
