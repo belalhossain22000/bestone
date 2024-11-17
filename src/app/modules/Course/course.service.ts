@@ -118,7 +118,7 @@ const getCourseById = async (courseId: string) => {
 
 // Update course
 const updateCourse = async (req: Request) => {
-  const courseId = req.params.courseId;
+  const courseId = req.params.id;
   const thumbUrl = req.file
     ? `${config.backend_base_url}/uploads/${req.file.originalname}`
     : undefined;
@@ -126,7 +126,7 @@ const updateCourse = async (req: Request) => {
   const payload = req.body.body ? JSON.parse(req.body.body) : {};
 
   if (req.file) payload.thumbUrl = thumbUrl;
-
+  
   const isCourseExist = await prisma.course.findUnique({
     where: { id: courseId },
   });
