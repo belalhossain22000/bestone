@@ -4,22 +4,43 @@ import { IUser, IUserFilterRequest } from "./user.interface";
 import * as bcrypt from "bcrypt";
 import { IPaginationOptions } from "../../../interfaces/paginations";
 import { paginationHelper } from "../../../helpars/paginationHelper";
-import { Prisma, User, UserRole, UserStatus } from "@prisma/client";
+import { Prisma, Student, User, UserRole, UserStatus } from "@prisma/client";
 import { userSearchAbleFields } from "./user.costant";
 import config from "../../../config";
 import httpStatus from "http-status";
 import { Request } from "express";
+import { v4 as uuidv4 } from "uuid";
 
 //*! Create a new student in the database.
-const createStudent = async (payload: any) => {
-  // hash the password
-  const hashedPassword: string = await bcrypt.hash(
+const createStudent = async (payload: Student & any) => {
+
+  // Hash the password
+  const hashedPassword = await bcrypt.hash(
     payload.password,
     Number(config.bcrypt_salt_rounds)
   );
 
-  // create user in the database using transaction for atomicity.
+  // Generate a new referredId
+  const referredId = uuidv4();
+
+  // Check if referredId exists
+  const inviter = payload.student.referredId
+    ? await prisma.student.findUnique({
+        where: { referredId: payload.student.referredId },
+      })
+    : null;
+
+  // Define transaction logic
   const result = await prisma.$transaction(async (transaction) => {
+    // Update inviter's coin balance if referredId exists
+    if (inviter) {
+      await transaction.student.update({
+        where: { id: inviter.id },
+        data: { coin: (inviter.coin as number) + 10 },
+      });
+    }
+
+    // Create user
     await transaction.user.create({
       data: {
         email: payload.student.email,
@@ -28,11 +49,18 @@ const createStudent = async (payload: any) => {
       },
     });
 
+    // Create student
     const student = await transaction.student.create({
-      data: payload.student,
+      data: {
+        ...payload.student,
+        referredId,
+        coin: inviter ? 50 : 0,
+      },
     });
+
     return student;
   });
+
   return result;
 };
 

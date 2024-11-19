@@ -33,6 +33,8 @@ model Student {
   profileImage String?
   institute    String?
   interest     Json?
+  referredId   String? @unique
+  coin         Int? @default(0)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   user         User     @relation(fields: [email], references: [email])
@@ -101,7 +103,7 @@ model Category {
 
 model Course {
   id               String         @id @default(auto()) @map("_id") @db.ObjectId
-  title            String @unique
+  title            String         @unique
   startDate        DateTime
   endDate          DateTime
   description      String
@@ -115,7 +117,7 @@ model Course {
   lessons          Int
   language         String
   price            Float
-  thumbUrl          String
+  thumbUrl         String
   teacherId        String         @db.ObjectId
   Teacher          Teacher        @relation(fields: [teacherId], references: [id])
   categoryId       String         @db.ObjectId

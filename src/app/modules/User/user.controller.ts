@@ -7,6 +7,7 @@ import pick from "../../../shared/pick";
 import { userFilterableFields } from "./user.costant";
 
 const createStudent = catchAsync(async (req: Request, res: Response) => {
+
   const result = await userService.createStudent(req.body);
   sendResponse(res, {
     statusCode: httpStatus.OK,
