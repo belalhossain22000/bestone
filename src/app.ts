@@ -29,7 +29,7 @@ app.get("/", (req: Request, res: Response) => {
   res.send({
     success:true,
     statusCode: httpStatus.OK,
-    message: "Welcome to Rydleap API!",
+    message: "Hi Developers!",
   });
 });
 

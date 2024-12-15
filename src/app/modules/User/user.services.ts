@@ -10,10 +10,10 @@ import config from "../../../config";
 import httpStatus from "http-status";
 import { Request } from "express";
 import { v4 as uuidv4 } from "uuid";
+import { stripe } from "../../../helpars/stripe";
 
 //*! Create a new student in the database.
 const createStudent = async (payload: Student & any) => {
-
   // Hash the password
   const hashedPassword = await bcrypt.hash(
     payload.password,
@@ -40,6 +40,15 @@ const createStudent = async (payload: Student & any) => {
       });
     }
 
+    let customer;
+    try {
+      customer = await stripe.customers.create({
+        email: payload.student.email,
+      });
+    } catch (error: any) {
+      throw new ApiError(httpStatus.NOT_ACCEPTABLE, error);
+    }
+
     // Create user
     await transaction.user.create({
       data: {
@@ -55,6 +64,7 @@ const createStudent = async (payload: Student & any) => {
         ...payload.student,
         referredId,
         coin: inviter ? 50 : 0,
+        stripeCustomerId: customer.id,
       },
     });
 
