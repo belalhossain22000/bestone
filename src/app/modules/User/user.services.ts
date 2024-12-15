@@ -11,9 +11,20 @@ import httpStatus from "http-status";
 import { Request } from "express";
 import { v4 as uuidv4 } from "uuid";
 import { stripe } from "../../../helpars/stripe";
+import { AuthServices } from "../Auth/auth.service";
 
 //*! Create a new student in the database.
 const createStudent = async (payload: Student & any) => {
+  const isUserExist = await prisma.user.findUnique({
+    where: { email: payload.student.email },
+  });
+
+  if (isUserExist) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Student with this email already exists"
+    );
+  }
   // Hash the password
   const hashedPassword = await bcrypt.hash(
     payload.password,
@@ -70,13 +81,30 @@ const createStudent = async (payload: Student & any) => {
 
     return student;
   });
-
-  return result;
+  let token;
+  if (result) {
+    token = await AuthServices.loginUser({
+      email: payload.student.email,
+      password: payload.password,
+    });
+  }
+  return { token };
 };
 
 //*! Create a new teacher in the database.
 
 const createTeacher = async (payload: any) => {
+  console.log(payload);
+  const isUserExist = await prisma.user.findUnique({
+    where: { email: payload.teacher.email },
+  });
+
+  if (isUserExist) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Teacher with this email already exists"
+    );
+  }
   // hash the password
   const hashedPassword: string = await bcrypt.hash(
     payload.password,
@@ -98,12 +126,29 @@ const createTeacher = async (payload: any) => {
     });
     return teacher;
   });
-  return result;
+  let token;
+  if (result) {
+    token = await AuthServices.loginUser({
+      email: payload.teacher.email,
+      password: payload.password,
+    });
+  }
+  return { token };
 };
 
 //*! Create a new admin in the database.
 
 const createAdmin = async (payload: any) => {
+  const isUserExist = await prisma.user.findUnique({
+    where: { email: payload.admin.email },
+  });
+
+  if (isUserExist) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Student with this email already exists"
+    );
+  }
   // hash the password
   const hashedPassword: string = await bcrypt.hash(
     payload.password,
@@ -125,12 +170,29 @@ const createAdmin = async (payload: any) => {
     });
     return admin;
   });
-  return result;
+  let token;
+  if (result) {
+    token = await AuthServices.loginUser({
+      email: payload.admin.email,
+      password: payload.password,
+    });
+  }
+  return { token };
 };
 
 //*! Create a new institute in the database.
 
 const createInstitute = async (payload: any) => {
+  const isUserExist = await prisma.user.findUnique({
+    where: { email: payload.institute.email },
+  });
+
+  if (isUserExist) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Student with this email already exists"
+    );
+  }
   // hash the password
   const hashedPassword: string = await bcrypt.hash(
     payload.password,
@@ -152,7 +214,14 @@ const createInstitute = async (payload: any) => {
     });
     return institute;
   });
-  return result;
+  let token;
+  if (result) {
+    token = await AuthServices.loginUser({
+      email: payload.institute.email,
+      password: payload.password,
+    });
+  }
+  return { token };
 };
 
 // reterive all users from the database also searcing anf filetering
@@ -227,7 +296,7 @@ const getUsersFromDb = async (params: any, options: IPaginationOptions) => {
 const updateProfile = async (req: Request) => {
   const file = req.files;
   const payload = JSON.parse(req.body.body);
-  console.log(file, payload);
+  
   const userInfo = await prisma.user.findUnique({
     where: {
       email: req.user.email,
@@ -266,7 +335,7 @@ const updateProfile = async (req: Request) => {
 
 // update user data into database by id fir admin
 const updateUserIntoDb = async (payload: IUser, id: string) => {
-  const userInfo = await prisma.user.findUniqueOrThrow({
+  const userInfo = await prisma.user.findUnique({
     where: {
       id: id,
     },
