@@ -25,20 +25,20 @@ model User {
 }
 
 model Student {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  name         String
-  email        String   @unique
-  username     String?
-  phoneNumber  String?
-  profileImage String?
-  institute    String?
-  interest     Json?
-  referredId   String? @unique
-  coin         Int? @default(0)
-  stripeCustomerId String? 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  user         User     @relation(fields: [email], references: [email])
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  name             String
+  email            String   @unique
+  username         String?
+  phoneNumber      String?
+  profileImage     String?
+  institute        String?
+  interest         Json?
+  referredId       String?  @unique
+  coin             Int?     @default(0)
+  stripeCustomerId String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [email], references: [email])
 
   @@map("Students")
 }
@@ -59,6 +59,7 @@ model Teacher {
   id                String   @id @default(auto()) @map("_id") @db.ObjectId
   name              String
   email             String   @unique
+  instituteId       String?
   username          String?
   phoneNumber       String?
   profileImage      String?
@@ -82,7 +83,8 @@ model Institute {
   address         String?
   about           String?
   specializations String?
-  logoUrl         String?
+  video           String?
+  profileImage    String?
   latitude        Float?
   longitude       Float?
   createdAt       DateTime @default(now())

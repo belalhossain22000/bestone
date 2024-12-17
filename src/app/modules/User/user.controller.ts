@@ -38,7 +38,7 @@ const createAdmin = catchAsync(async (req: Request, res: Response) => {
 });
 
 const createInstitute = catchAsync(async (req: Request, res: Response) => {
-  const result = await userService.createInstitute(req.body);
+  const result = await userService.createInstitute(req);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -64,7 +64,6 @@ const getUsers = catchAsync(async (req: Request, res: Response) => {
 // get all user form db
 const updateProfile = catchAsync(
   async (req: Request & { user?: any }, res: Response) => {
-    const user = req?.user;
 
     const result = await userService.updateProfile(req);
     sendResponse(res, {

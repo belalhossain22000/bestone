@@ -19,7 +19,9 @@ router.post(
 //*! Create a new teacher in the database.
 router.post(
   "/teacher",
-  validateRequest(UserValidation.CreateTeacherValidationSchema),
+  // auth()
+  fileUploader.uploadSingle,
+  // validateRequest(UserValidation.CreateTeacherValidationSchema),
   userController.createTeacher
 );
 
@@ -33,7 +35,9 @@ router.post(
 //*! Create a new Institute in the database.
 router.post(
   "/institute",
-  validateRequest(UserValidation.CreateInstituteValidationSchema),
+  auth(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+  fileUploader.uploadInstituteFile,
+  // validateRequest(UserValidation.CreateInstituteValidationSchema),
   userController.createInstitute
 );
 // *!get all  user
@@ -42,7 +46,7 @@ router.get("/", userController.getUsers);
 // *!profile user
 router.put(
   "/profile",
-  auth(UserRole.ADMIN, UserRole.STUDENT),
+  auth(),
   fileUploader.uploadSingle,
   userController.updateProfile
 );

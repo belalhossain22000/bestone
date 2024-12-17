@@ -13,6 +13,10 @@ const upload = multer({ storage: storage });
 
 // upload single image
 const uploadSingle = upload.single("image");
+const uploadInstituteFile = upload.fields([
+  { name: "image", maxCount: 10 },
+  { name: "video", maxCount: 10 },
+]);
 
 // upload multiple image
 const uploadMultiple = upload.fields([
@@ -29,5 +33,6 @@ export const fileUploader = {
   upload,
   uploadSingle,
   uploadMultiple,
+  uploadInstituteFile
 
 };

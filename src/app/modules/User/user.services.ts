@@ -94,7 +94,6 @@ const createStudent = async (payload: Student & any) => {
 //*! Create a new teacher in the database.
 
 const createTeacher = async (payload: any) => {
-  console.log(payload);
   const isUserExist = await prisma.user.findUnique({
     where: { email: payload.teacher.email },
   });
@@ -146,7 +145,7 @@ const createAdmin = async (payload: any) => {
   if (isUserExist) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      "Student with this email already exists"
+      "Admin with this email already exists"
     );
   }
   // hash the password
@@ -182,7 +181,15 @@ const createAdmin = async (payload: any) => {
 
 //*! Create a new institute in the database.
 
-const createInstitute = async (payload: any) => {
+const createInstitute = async (req: Request) => {
+  const files = req.files as any;
+  let payload = JSON.parse(req.body.body);
+  if (files) {
+    payload.institute.profileImage = `${config.backend_base_url}/uploads/${files.image[0].originalname}`;
+    payload.institute.video = `${config.backend_base_url}/uploads/${files.video[0].originalname}`;
+  }
+
+  // console.log(payload.institute);
   const isUserExist = await prisma.user.findUnique({
     where: { email: payload.institute.email },
   });
@@ -190,7 +197,7 @@ const createInstitute = async (payload: any) => {
   if (isUserExist) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      "Student with this email already exists"
+      "Institute with this email already exists"
     );
   }
   // hash the password
@@ -214,14 +221,14 @@ const createInstitute = async (payload: any) => {
     });
     return institute;
   });
-  let token;
-  if (result) {
-    token = await AuthServices.loginUser({
-      email: payload.institute.email,
-      password: payload.password,
-    });
-  }
-  return { token };
+  // let token;
+  // if (result) {
+  //   token = await AuthServices.loginUser({
+  //     email: payload.institute.email,
+  //     password: payload.password,
+  //   });
+  // }
+  return result;
 };
 
 // reterive all users from the database also searcing anf filetering
@@ -294,43 +301,91 @@ const getUsersFromDb = async (params: any, options: IPaginationOptions) => {
 
 // update profile by user won profile uisng token or email and id
 const updateProfile = async (req: Request) => {
-  const file = req.files;
-  const payload = JSON.parse(req.body.body);
-  
-  const userInfo = await prisma.user.findUnique({
-    where: {
-      email: req.user.email,
-      id: req.user.id,
-    },
-  });
+  const file = req.file as any;
+  let payload = JSON.parse(req.body.body);
 
-  if (!userInfo) {
-    throw new ApiError(404, "User not found");
+  // Add profile image URL to payload if file exists
+  if (file) {
+    payload.profileImage = `${config.backend_base_url}/uploads/${file.originalname}`;
   }
 
-  // Update the user profile with the new information
-  const result = await prisma.user.update({
-    where: {
-      email: userInfo.email,
-    },
-    data: {
-      email: payload.email || userInfo.email,
-    },
-    select: {
-      id: true,
-      email: true,
-      createdAt: true,
-      updatedAt: true,
-    },
+  const { email, id } = req.user;
+
+  // Step 1: Check if user exists
+  const user = await prisma.user.findUnique({
+    where: { email, id },
   });
 
-  if (!result)
-    throw new ApiError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      "Failed to update user profile"
-    );
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
 
-  return result;
+  // Step 2: Use transaction to update User and role-specific table
+  const result = await prisma.$transaction(async (prisma) => {
+    // Update User table email if it exists in the payload
+    if (payload.email && payload.email !== user.email) {
+      const existingUserWithEmail = await prisma.user.findUnique({
+        where: { email: payload.email },
+      });
+
+      // if (existingUserWithEmail) {
+      //   throw new ApiError(httpStatus.BAD_REQUEST, "Email already in use");
+      // }
+
+      // Update the email in the User table
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { email: payload.email },
+      });
+
+      // Update the user's email reference
+      user.email = payload.email;
+    }
+
+    // Update role-specific table
+    let updatedProfile;
+
+    switch (user.role) {
+      case "STUDENT":
+        updatedProfile = await prisma.student.update({
+          where: { email: user.email },
+          data: payload,
+        });
+        break;
+
+      case "TEACHER":
+        updatedProfile = await prisma.teacher.update({
+          where: { email: user.email },
+          data: payload,
+        });
+        break;
+
+      case "INSTITUTE":
+        updatedProfile = await prisma.institute.update({
+          where: { email: user.email },
+          data: payload,
+        });
+        break;
+
+      case "ADMIN":
+        updatedProfile = await prisma.admin.update({
+          where: { email: user.email },
+          data: payload,
+        });
+        break;
+
+      default:
+        throw new ApiError(httpStatus.BAD_REQUEST, "Invalid user role");
+    }
+
+    return updatedProfile;
+  });
+
+  // Step 3: Return updated profile
+  return {
+    message: "Profile updated successfully",
+    data: result,
+  };
 };
 
 // update user data into database by id fir admin
