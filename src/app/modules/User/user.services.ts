@@ -93,7 +93,17 @@ const createStudent = async (payload: Student & any) => {
 
 //*! Create a new teacher in the database.
 
-const createTeacher = async (payload: any) => {
+const createTeacher = async (req:Request) => {
+
+  const file= req.file as any
+
+  let payload=JSON.parse(req.body.body);
+
+
+  if(file){
+    payload.teacher.profileImage=`${config.backend_base_url}/uploads/${file.originalname}`
+  }
+
   const isUserExist = await prisma.user.findUnique({
     where: { email: payload.teacher.email },
   });
@@ -104,6 +114,9 @@ const createTeacher = async (payload: any) => {
       "Teacher with this email already exists"
     );
   }
+
+if(!payload.teacher.instituteId) throw new ApiError(httpStatus.NOT_FOUND,"Institute not selected must have to select a institute ")
+
   // hash the password
   const hashedPassword: string = await bcrypt.hash(
     payload.password,
@@ -125,14 +138,14 @@ const createTeacher = async (payload: any) => {
     });
     return teacher;
   });
-  let token;
-  if (result) {
-    token = await AuthServices.loginUser({
-      email: payload.teacher.email,
-      password: payload.password,
-    });
-  }
-  return { token };
+  // let token;
+  // if (result) {
+  //   token = await AuthServices.loginUser({
+  //     email: payload.teacher.email,
+  //     password: payload.password,
+  //   });
+  // }
+  return result;
 };
 
 //*! Create a new admin in the database.

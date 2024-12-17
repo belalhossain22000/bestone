@@ -18,7 +18,7 @@ const createStudent = catchAsync(async (req: Request, res: Response) => {
 });
 
 const createTeacher = catchAsync(async (req: Request, res: Response) => {
-  const result = await userService.createTeacher(req.body);
+  const result = await userService.createTeacher(req);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,

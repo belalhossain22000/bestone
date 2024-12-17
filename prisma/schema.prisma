@@ -59,7 +59,7 @@ model Teacher {
   id                String   @id @default(auto()) @map("_id") @db.ObjectId
   name              String
   email             String   @unique
-  instituteId       String?
+  instituteId       String
   username          String?
   phoneNumber       String?
   profileImage      String?
