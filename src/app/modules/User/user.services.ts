@@ -93,15 +93,13 @@ const createStudent = async (payload: Student & any) => {
 
 //*! Create a new teacher in the database.
 
-const createTeacher = async (req:Request) => {
+const createTeacher = async (req: Request) => {
+  const file = req.file as any;
 
-  const file= req.file as any
+  let payload = JSON.parse(req.body.body);
 
-  let payload=JSON.parse(req.body.body);
-
-
-  if(file){
-    payload.teacher.profileImage=`${config.backend_base_url}/uploads/${file.originalname}`
+  if (file) {
+    payload.teacher.profileImage = `${config.backend_base_url}/uploads/${file.originalname}`;
   }
 
   const isUserExist = await prisma.user.findUnique({
@@ -115,7 +113,11 @@ const createTeacher = async (req:Request) => {
     );
   }
 
-if(!payload.teacher.instituteId) throw new ApiError(httpStatus.NOT_FOUND,"Institute not selected must have to select a institute ")
+  if (!payload.teacher.instituteId)
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      "Institute not selected must have to select a institute "
+    );
 
   // hash the password
   const hashedPassword: string = await bcrypt.hash(
@@ -314,15 +316,23 @@ const getUsersFromDb = async (params: any, options: IPaginationOptions) => {
 
 // update profile by user won profile uisng token or email and id
 const updateProfile = async (req: Request) => {
-  const file = req.file as any;
-  let payload = JSON.parse(req.body.body);
-
-  // Add profile image URL to payload if file exists
-  if (file) {
-    payload.profileImage = `${config.backend_base_url}/uploads/${file.originalname}`;
+  const files = req.files as any;
+  let payload:any={};
+  if (req.body.body) {
+    payload = JSON.parse(req.body.body);
   }
 
-  const { email, id } = req.user;
+  // Add profile image URL to payload if file exists
+  if (files?.image) {
+    payload.profileImage = `${config.backend_base_url}/uploads/${files.image[0].originalname}`;
+  
+  }
+  // console.log(payload);
+  if (files?.video) {
+    payload.video = `${config.backend_base_url}/uploads/${files.video[0].originalname}`;
+  }
+
+  const { email, id, role } = req.user;
 
   // Step 1: Check if user exists
   const user = await prisma.user.findUnique({
@@ -332,6 +342,8 @@ const updateProfile = async (req: Request) => {
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
+
+
 
   // Step 2: Use transaction to update User and role-specific table
   const result = await prisma.$transaction(async (prisma) => {

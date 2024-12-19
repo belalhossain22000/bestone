@@ -3,16 +3,20 @@ import { InstituteService } from "./institute.service";
 import sendResponse from "../../../shared/sendResponse";
 import httpStatus from "http-status";
 import catchAsync from "../../../shared/catchAsync";
+import pick from "../../../shared/pick";
+import { instituteFilterableFields } from "./institute.constant";
 
 
 
 // Get all institutes
 const getAllInstitutes = catchAsync(async (req: Request, res: Response) => {
-  const result = await InstituteService.getAllInstitutes();
+  const filters = pick(req.query, instituteFilterableFields);
+  const options = pick(req.query, ["limit", "page", "sortBy", "sortOrder"]);
+  const result = await InstituteService.getAllInstitutes(filters, options);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: "All institutes fetched successfully!",
+    message: "All institutes reterive successfully!",
     data: result,
   });
 });

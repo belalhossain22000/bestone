@@ -19,7 +19,7 @@ router.post(
 //*! Create a new teacher in the database.
 router.post(
   "/teacher",
-  // auth()
+  auth(UserRole.ADMIN, UserRole.INSTITUTE, UserRole.SUPER_ADMIN),
   fileUploader.uploadSingle,
   // validateRequest(UserValidation.CreateTeacherValidationSchema),
   userController.createTeacher
@@ -47,7 +47,7 @@ router.get("/", userController.getUsers);
 router.put(
   "/profile",
   auth(),
-  fileUploader.uploadSingle,
+  fileUploader.uploadInstituteFile,
   userController.updateProfile
 );
 

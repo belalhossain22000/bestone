@@ -3,8 +3,6 @@ import { StudentController } from "./student.controller";
 
 const router = express.Router();
 
-
-
 // Route to get all students
 router.get("/", StudentController.getAllStudents);
 

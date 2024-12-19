@@ -1,12 +1,75 @@
 import prisma from "../../../shared/prisma";
 import ApiError from "../../../errors/ApiErrors";
 import httpStatus from "http-status";
-
+import { paginationHelper } from "../../../helpars/paginationHelper";
+import { IPaginationOptions } from "../../../interfaces/paginations";
+import { instituteSearchAbleFields } from "./institute.constant";
+import { Prisma } from "@prisma/client";
 
 // Get all institutes
-const getAllInstitutes = async () => {
-  const institutes = await prisma.institute.findMany();
-  return institutes;
+const getAllInstitutes = async (params: any, options: IPaginationOptions) => {
+  const { page, limit, skip } = paginationHelper.calculatePagination(options);
+  const { searchTerm, ...filterData } = params;
+  const andConditions: Prisma.InstituteWhereInput[] = [];
+  //console.log(filterData);
+  if (params.searchTerm) {
+    andConditions.push({
+      OR: instituteSearchAbleFields.map((field) => ({
+        [field]: {
+          contains: params.searchTerm,
+          mode: "insensitive",
+        },
+      })),
+    });
+  }
+
+  if (Object.keys(filterData).length > 0) {
+    andConditions.push({
+      AND: Object.keys(filterData).map((key) => ({
+        [key]: {
+          equals: (filterData as any)[key],
+        },
+      })),
+    });
+  }
+
+  const whereConditions: Prisma.InstituteWhereInput =
+    andConditions.length > 0 ? { AND: andConditions } : {};
+
+  const result = await prisma.institute.findMany({
+    where: whereConditions,
+    skip,
+    take: limit,
+    orderBy:
+      options.sortBy && options.sortOrder
+        ? {
+            [options.sortBy]: options.sortOrder,
+          }
+        : {
+            createdAt: "desc",
+          },
+    // select: {
+    //   id: true,
+    //   email: true,
+    //   role: true,
+    //   status: true,
+    //   createdAt: true,
+    //   updatedAt: true,
+    // },
+  });
+
+  const total = await prisma.institute.count({
+    where: whereConditions,
+  });
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+    },
+    data: result,
+  };
 };
 
 // Get institute by ID
@@ -25,11 +88,14 @@ const getInstituteWithCourses = async (id: string) => {
   const instituteWithCourses = await prisma.institute.findUnique({
     where: { id },
     include: {
-      course: true, 
+      course: true,
     },
   });
   if (!instituteWithCourses) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Institute not found with courses");
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      "Institute not found with courses"
+    );
   }
   return instituteWithCourses;
 };
