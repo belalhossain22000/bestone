@@ -21,7 +21,7 @@ export default {
   },
   reset_pass_link: process.env.RESET_PASS_LINK,
   emailSender: {
-    email: process.env.EMAIL,
-    app_pass: process.env.APP_PASS,
+    email: process.env.MAIL,
+    app_pass: process.env.MAIL_PASS,
   },
 };
