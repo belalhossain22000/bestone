@@ -12,7 +12,7 @@ model User {
   email        String         @unique
   password     String
   role         UserRole       @default(STUDENT)
-  otp          String? 
+  otp          String?
   otpExpiresAt DateTime?
   status       UserStatus     @default(ACTIVE)
   createdAt    DateTime       @default(now())
@@ -106,8 +106,8 @@ model Category {
 }
 
 model Course {
-  id               String         @id @default(auto()) @map("_id") @db.ObjectId
-  title            String         @unique
+  id               String          @id @default(auto()) @map("_id") @db.ObjectId
+  title            String          @unique
   startDate        DateTime
   endDate          DateTime
   description      String
@@ -122,18 +122,35 @@ model Course {
   language         String
   price            Float
   thumbUrl         String
-  teacherId        String         @db.ObjectId
-  Teacher          Teacher        @relation(fields: [teacherId], references: [id])
-  categoryId       String         @db.ObjectId
-  Category         Category       @relation(fields: [categoryId], references: [id])
-  instituteId      String         @db.ObjectId
-  institute        Institute      @relation(fields: [instituteId], references: [id])
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  availableSeats   Int             
+  certificateOffered Boolean       
+  internshipSupport Boolean        
+  teacherId        String          @db.ObjectId
+  Teacher          Teacher         @relation(fields: [teacherId], references: [id])
+  categoryId       String          @db.ObjectId
+  Category         Category        @relation(fields: [categoryId], references: [id])
+  instituteId      String          @db.ObjectId
+  institute        Institute       @relation(fields: [instituteId], references: [id])
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
   CourseReview     CourseReview[]
+  OfferedCourses   OfferedCourses[]
 
   @@map("Courses")
 }
+
+model OfferedCourses {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  courseId          String   @db.ObjectId
+  offeredPercentage Float
+  course            Course   @relation(fields: [courseId], references: [id])
+  startDate         DateTime
+  endDate           DateTime
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+
 
 model CourseReview {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
