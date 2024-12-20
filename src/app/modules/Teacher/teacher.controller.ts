@@ -3,12 +3,16 @@ import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 import httpStatus from "http-status";
 import { TeacherService } from "./teacher.service";
+import pick from "../../../shared/pick";
+import { teacherFilterableFields } from "./teacher.constant";
 
 
 
 // Get all teachers
 const getTeachers = catchAsync(async (req: Request, res: Response) => {
-  const result = await TeacherService.getTeachers();
+  const filters = pick(req.query, teacherFilterableFields);
+  const options = pick(req.query, ["limit", "page", "sortBy", "sortOrder"]);
+  const result = await TeacherService.getTeachers(filters, options);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,

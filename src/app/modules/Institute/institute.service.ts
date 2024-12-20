@@ -8,7 +8,7 @@ import { Prisma } from "@prisma/client";
 
 // Get all institutes
 const getAllInstitutes = async (params: any, options: IPaginationOptions) => {
-  console.log("object");
+  
   const { page, limit, skip } = paginationHelper.calculatePagination(options);
   const { searchTerm, ...filterData } = params;
   const andConditions: Prisma.InstituteWhereInput[] = [];
@@ -49,11 +49,11 @@ const getAllInstitutes = async (params: any, options: IPaginationOptions) => {
         : {
             createdAt: "desc",
           },
-    select: {
-      id: true,
-      email: true,
-      address: true,
-    },
+    // select: {
+    //   id: true,
+    //   email: true,
+    //   address: true,
+    // },
   });
 
   const total = await prisma.institute.count({
