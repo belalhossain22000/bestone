@@ -54,15 +54,19 @@ const updateCourse = catchAsync(async (req: Request, res: Response) => {
 });
 
 // Get courses by institute
-const getCoursesByInstitute = catchAsync(async (req: Request, res: Response) => {
-  const result = await CourseService.getCoursesByInstitute(req.params.instituteId);
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: "Courses retrieved successfully!",
-    data: result,
-  });
-});
+const getCoursesByInstitute = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await CourseService.getCoursesByInstitute(
+      req.params.instituteId
+    );
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Courses retrieved successfully!",
+      data: result,
+    });
+  }
+);
 
 // Get courses by teacher
 const getCoursesByTeacher = catchAsync(async (req: Request, res: Response) => {
@@ -74,6 +78,20 @@ const getCoursesByTeacher = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+
+// Recommend courses by interest
+const recommendCoursesByInterest = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await CourseService.recommendCoursesByInterest(req.user.id);
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: result.message || "Recommended courses retrieved successfully!",
+      data: result.courses,
+    });
+  }
+);
+
 // Delete a course by ID
 const deleteCourse = catchAsync(async (req: Request, res: Response) => {
   const result = await CourseService.deleteCourse(req.params.id);
@@ -93,5 +111,6 @@ export const CourseController = {
   updateCourse,
   deleteCourse,
   getCoursesByInstitute,
-  getCoursesByTeacher
+  getCoursesByTeacher,
+  recommendCoursesByInterest,
 };

@@ -96,11 +96,11 @@ const getAllCourses = async (params: any, options: IPaginationOptions) => {
         : {
             createdAt: "desc",
           },
-          // include:{
-          //   Category:true,
-          //   Teacher:true,
-          //   institute:true
-          // }
+    // include:{
+    //   Category:true,
+    //   Teacher:true,
+    //   institute:true
+    // }
   });
 
   const total = await prisma.course.count({
@@ -167,12 +167,14 @@ const getCoursesByInstitute = async (instituteId: string) => {
   });
 
   if (!result) {
-    throw new ApiError(httpStatus.NOT_FOUND, "No courses found for this institute");
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      "No courses found for this institute"
+    );
   }
 
   return result;
 };
-
 
 // Get courses by teacher
 const getCoursesByTeacher = async (teacherId: string) => {
@@ -181,10 +183,83 @@ const getCoursesByTeacher = async (teacherId: string) => {
   });
 
   if (!result) {
-    throw new ApiError(httpStatus.NOT_FOUND, "No courses found for this teacher");
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      "No courses found for this teacher"
+    );
   }
 
   return result;
+};
+
+// Recommend courses by interest
+const recommendCoursesByInterest = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  const student = await prisma.student.findUnique({
+    where: { email: user?.email },
+  });
+
+  if (!student || !student.interest) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Student interest not found");
+  }
+
+  // Ensure student.interest is parsed correctly
+  const interests =
+    typeof student.interest === "string"
+      ? JSON.parse(student.interest)
+      : student.interest;
+
+  if (!Array.isArray(interests)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Student interest is not valid");
+  }
+
+  console.log("Student Interests:", interests);
+
+  // Find courses based on interests
+  const matchedCourses = await prisma.course.findMany({
+    where: {
+      OR: interests.map((interest: string) => ({
+        OR: [
+          { title: { contains: interest, mode: "insensitive" } },
+          { description: { contains: interest, mode: "insensitive" } },
+          { whatYouWillLearn: { contains: interest, mode: "insensitive" } },
+        ],
+      })),
+    },
+    // include: {
+    //   Teacher: true,
+    //   Category: true,
+    //   institute: true,
+    // },
+  });
+
+  // If no courses match, fetch a few random courses for fallback
+  if (matchedCourses.length === 0) {
+    const fallbackCourses = await prisma.course.findMany({
+      take: 5, // Limit to 5 random courses
+      // include: {
+      //   Teacher: true,
+      //   Category: true,
+      //   institute: true,
+      // },
+    });
+    return {
+      message: "No courses matched your interests. Here are some recommendations:",
+      courses: fallbackCourses,
+    };
+  }
+
+  // Return matched courses
+  return {
+    message: "Here are some courses based on your interests:",
+    courses: matchedCourses,
+  };
 };
 
 // Delete course
@@ -212,5 +287,6 @@ export const CourseService = {
   updateCourse,
   deleteCourse,
   getCoursesByInstitute,
-  getCoursesByTeacher
+  getCoursesByTeacher,
+  recommendCoursesByInterest
 };
