@@ -27,6 +27,26 @@ const createCourse = async (req: Request) => {
       `Course with title ${payload.title} already exists`
     );
 
+  const isTeacherExist = await prisma.teacher.findUnique({
+    where: { id: payload.teacherId },
+  });
+
+  if (!isTeacherExist)
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      `Teacher with id ${payload.teacherId} not found`
+    );
+
+  const isCategoryExist = await prisma.category.findUnique({
+    where: { id: payload.categoryId },
+  });
+
+  if (!isCategoryExist)
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      `Category with id ${payload.categoryId} not found`
+    );
+
   const result = await prisma.course.create({
     data: { ...payload, thumbUrl },
   });
@@ -76,14 +96,11 @@ const getAllCourses = async (params: any, options: IPaginationOptions) => {
         : {
             createdAt: "desc",
           },
-    // select: {
-    //   id: true,
-    //   email: true,
-    //   role: true,
-    //   status: true,
-    //   createdAt: true,
-    //   updatedAt: true,
-    // },
+          // include:{
+          //   Category:true,
+          //   Teacher:true,
+          //   institute:true
+          // }
   });
 
   const total = await prisma.course.count({
@@ -126,7 +143,7 @@ const updateCourse = async (req: Request) => {
   const payload = req.body.body ? JSON.parse(req.body.body) : {};
 
   if (req.file) payload.thumbUrl = thumbUrl;
-  
+
   const isCourseExist = await prisma.course.findUnique({
     where: { id: courseId },
   });
@@ -142,6 +159,20 @@ const updateCourse = async (req: Request) => {
 
   return result;
 };
+
+// Get courses by institute
+const getCoursesByInstitute = async (instituteId: string) => {
+  const result = await prisma.course.findMany({
+    where: { instituteId },
+  });
+
+  if (!result) {
+    throw new ApiError(httpStatus.NOT_FOUND, "No courses found for this institute");
+  }
+
+  return result;
+};
+
 
 // Delete course
 const deleteCourse = async (courseId: string) => {
@@ -167,4 +198,5 @@ export const CourseService = {
   getAllCourses,
   updateCourse,
   deleteCourse,
+  getCoursesByInstitute,
 };

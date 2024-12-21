@@ -106,35 +106,35 @@ model Category {
 }
 
 model Course {
-  id               String          @id @default(auto()) @map("_id") @db.ObjectId
-  title            String          @unique
-  startDate        DateTime
-  endDate          DateTime
-  description      String
-  whatYouWillLearn String
-  perWeekClass     Int
-  classTime        String
-  courseHours      String
-  courseDays       String
-  level            String
-  duration         String
-  lessons          Int
-  language         String
-  price            Float
-  thumbUrl         String
-  availableSeats   Int             
-  certificateOffered Boolean       
-  internshipSupport Boolean        
-  teacherId        String          @db.ObjectId
-  Teacher          Teacher         @relation(fields: [teacherId], references: [id])
-  categoryId       String          @db.ObjectId
-  Category         Category        @relation(fields: [categoryId], references: [id])
-  instituteId      String          @db.ObjectId
-  institute        Institute       @relation(fields: [instituteId], references: [id])
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
-  CourseReview     CourseReview[]
-  OfferedCourses   OfferedCourses[]
+  id                 String           @id @default(auto()) @map("_id") @db.ObjectId
+  title              String           @unique
+  startDate          DateTime
+  endDate            DateTime
+  description        String
+  whatYouWillLearn   String
+  perWeekClass       Int
+  classTime          String
+  courseHours        String
+  courseDays         String
+  level              String
+  duration           String
+  lessons            Int
+  language           String
+  price              Float
+  thumbUrl           String
+  availableSeats     Int
+  certificateOffered Boolean
+  internshipSupport  Boolean
+  teacherId          String           @db.ObjectId
+  Teacher            Teacher          @relation(fields: [teacherId], references: [id])
+  categoryId         String           @db.ObjectId
+  Category           Category         @relation(fields: [categoryId], references: [id])
+  instituteId        String           @db.ObjectId
+  institute          Institute        @relation(fields: [instituteId], references: [id])
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  CourseReview       CourseReview[]
+  OfferedCourses     OfferedCourses[]
 
   @@map("Courses")
 }
@@ -149,8 +149,6 @@ model OfferedCourses {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 }
-
-
 
 model CourseReview {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId

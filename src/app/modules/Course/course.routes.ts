@@ -18,6 +18,13 @@ router.get("/:id", CourseController.getCourseById);
 // Update a specific course by ID (with file upload middleware)
 router.patch("/:id", fileUploader.uploadSingle, CourseController.updateCourse);
 
+// Get courses by institute
+router.get(
+    "/institute/:instituteId",
+    // auth(UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT),
+    CourseController.getCoursesByInstitute
+  );
+
 // Delete a specific course by ID
 router.delete("/:id", CourseController.deleteCourse);
 
