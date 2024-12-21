@@ -174,6 +174,19 @@ const getCoursesByInstitute = async (instituteId: string) => {
 };
 
 
+// Get courses by teacher
+const getCoursesByTeacher = async (teacherId: string) => {
+  const result = await prisma.course.findMany({
+    where: { teacherId },
+  });
+
+  if (!result) {
+    throw new ApiError(httpStatus.NOT_FOUND, "No courses found for this teacher");
+  }
+
+  return result;
+};
+
 // Delete course
 const deleteCourse = async (courseId: string) => {
   const isCourseExist = await prisma.course.findUnique({
@@ -199,4 +212,5 @@ export const CourseService = {
   updateCourse,
   deleteCourse,
   getCoursesByInstitute,
+  getCoursesByTeacher
 };

@@ -25,6 +25,13 @@ router.get(
     CourseController.getCoursesByInstitute
   );
 
+  // Get courses by teacher
+router.get(
+  "/teacher/:teacherId",
+  // auth(UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT),
+  CourseController.getCoursesByTeacher
+);
+
 // Delete a specific course by ID
 router.delete("/:id", CourseController.deleteCourse);
 
