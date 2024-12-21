@@ -80,6 +80,19 @@ const getTeacherById = async (id: string) => {
   return teacher;
 };
 
+// Get teacher by institute
+const getTeacherByInstitute = async (instituteId: string) => {
+  const result = await prisma.teacher.findMany({
+    where: { instituteId },
+  });
+
+  if (!result) {
+    throw new ApiError(httpStatus.NOT_FOUND, "No teachers found for this institute");
+  }
+
+  return result;
+};
+
 const getTeacherWithCourses = async (id: string) => {
   const teacherWithCourses = await prisma.teacher.findUnique({
     where: { id },
@@ -127,4 +140,5 @@ export const TeacherService = {
   updateTeacher,
   deleteTeacher,
   getTeacherWithCourses,
+  getTeacherByInstitute,
 };

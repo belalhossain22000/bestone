@@ -9,7 +9,12 @@ router.get("/", TeacherController.getTeachers);
 
 // Route to get a specific teacher by ID
 router.get("/:id", TeacherController.getTeacherById);
-
+// Get teachers by institute
+router.get(
+    '/institute/:instituteId',
+    // auth(UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT),
+    TeacherController.getTeacherByInstitute
+  );
 // Route to update a specific teacher by ID
 router.patch("/:id", TeacherController.updateTeacher);
 

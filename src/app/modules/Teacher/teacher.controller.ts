@@ -33,6 +33,18 @@ const getTeacherById = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// Get teacher by institute
+const getTeacherByInstitute = catchAsync(async (req: Request, res: Response) => {
+  const { instituteId } = req.params;
+  const result = await TeacherService.getTeacherByInstitute(instituteId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Teachers retrieved successfully!",
+    data: result,
+  });
+});
+
 // Get teacher with their courses
 const getTeacherWithCourses = catchAsync(async (req: Request, res: Response) => {
     const { id } = req.params;
@@ -76,4 +88,5 @@ export const TeacherController = {
   updateTeacher,
   deleteTeacher,
   getTeacherWithCourses,
+  getTeacherByInstitute,
 };
