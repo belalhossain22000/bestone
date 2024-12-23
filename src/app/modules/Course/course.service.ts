@@ -145,7 +145,16 @@ const getCourseById = async (courseId: string) => {
     where: { id: courseId },
     include: {
       // institute: true,
-      CourseReview: true,
+      Teacher: true,
+      CourseReview: {
+        include: {
+          user: {
+            include:{
+              student: true
+            }
+          },
+        },
+      },
     },
   });
 
@@ -242,8 +251,6 @@ const recommendCoursesByInterest = async (userId: string) => {
     throw new ApiError(httpStatus.BAD_REQUEST, "Student interest is not valid");
   }
 
-
-
   // Find courses based on interests
   const matchedCourses = await prisma.course.findMany({
     where: {
@@ -255,35 +262,80 @@ const recommendCoursesByInterest = async (userId: string) => {
         ],
       })),
     },
-    // include: {
-    //   Teacher: true,
-    //   Category: true,
-    //   institute: true,
-    // },
+    include: {
+      institute: true, // Include institute data
+      CourseReview: true, // Include reviews for rating calculations
+    },
+  });
+
+  // Calculate total reviews and average rating for each course
+  const coursesWithRatings = matchedCourses.map((course) => {
+    const totalReviews = course.CourseReview.length;
+    const averageRating =
+      totalReviews > 0
+        ? course.CourseReview.reduce((sum, review) => sum + review.rating, 0) / totalReviews
+        : 0;
+
+    return {
+      id: course.id,
+      title: course.title,
+      price: course.price,
+      description: course.description,
+      institute: {
+        id: course.institute.id,
+        name: course.institute.name,
+        profileImage: course.institute.profileImage,
+      },
+      averageRating: parseFloat(averageRating.toFixed(1)),
+      totalReviews,
+    };
   });
 
   // If no courses match, fetch a few random courses for fallback
-  if (matchedCourses.length === 0) {
+  if (coursesWithRatings.length === 0) {
     const fallbackCourses = await prisma.course.findMany({
       take: 5, // Limit to 5 random courses
-      // include: {
-      //   Teacher: true,
-      //   Category: true,
-      //   institute: true,
-      // },
+      include: {
+        institute: true, // Include institute data
+        CourseReview: true, // Include reviews for rating calculations
+      },
     });
+
+    const fallbackCoursesWithRatings = fallbackCourses.map((course) => {
+      const totalReviews = course.CourseReview.length;
+      const averageRating =
+        totalReviews > 0
+          ? course.CourseReview.reduce((sum, review) => sum + review.rating, 0) / totalReviews
+          : 0;
+
+      return {
+        id: course.id,
+        title: course.title,
+        price: course.price,
+        description: course.description,
+        institute: {
+          id: course.institute.id,
+          name: course.institute.name,
+          profileImage: course.institute.profileImage,
+        },
+        averageRating: parseFloat(averageRating.toFixed(1)),
+        totalReviews,
+      };
+    });
+
     return {
       message: "No courses matched your interests. Here are some recommendations:",
-      courses: fallbackCourses,
+      courses: fallbackCoursesWithRatings,
     };
   }
 
-  // Return matched courses
+  // Return matched courses with ratings
   return {
     message: "Here are some courses based on your interests:",
-    courses: matchedCourses,
+    courses: coursesWithRatings,
   };
 };
+
 
 // Delete course
 const deleteCourse = async (courseId: string) => {

@@ -61,12 +61,11 @@ const getAllInstitutes = async (params: any, options: IPaginationOptions) => {
         : 0;
 
     return {
-      name: institute.name,
       id: institute.id,
-      // tagline: institute.tagline || "No tagline provided", // Optional tagline field
+      name: institute.name,
       profileImage: institute.profileImage,
-      averageRating: parseFloat(averageRating.toFixed(1)),
-      // totalReviews,
+      averageRating: parseFloat(averageRating.toFixed(1)), // Average rating
+      totalReviews, // Total number of reviews (rating count)
       address: institute.address,
     };
   });

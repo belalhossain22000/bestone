@@ -10,8 +10,9 @@ import config from "../../../config";
 import httpStatus from "http-status";
 import { Request } from "express";
 import { v4 as uuidv4 } from "uuid";
-import { stripe } from "../../../helpars/stripe";
+
 import { AuthServices } from "../Auth/auth.service";
+import stripe from "../../../helpars/stripe";
 
 //*! Create a new student in the database.
 const createStudent = async (payload: Student & any) => {
@@ -58,6 +59,9 @@ const createStudent = async (payload: Student & any) => {
       });
     } catch (error: any) {
       throw new ApiError(httpStatus.NOT_ACCEPTABLE, error);
+    }
+    if (!customer) {
+      throw new ApiError(httpStatus.NOT_ACCEPTABLE, "Failed to create student");
     }
 
     // Create user
@@ -317,7 +321,7 @@ const getUsersFromDb = async (params: any, options: IPaginationOptions) => {
 // update profile by user won profile uisng token or email and id
 const updateProfile = async (req: Request) => {
   const files = req.files as any;
-  let payload:any={};
+  let payload: any = {};
   if (req.body.body) {
     payload = JSON.parse(req.body.body);
   }
@@ -325,7 +329,6 @@ const updateProfile = async (req: Request) => {
   // Add profile image URL to payload if file exists
   if (files?.image) {
     payload.profileImage = `${config.backend_base_url}/uploads/${files.image[0].originalname}`;
-  
   }
   // console.log(payload);
   if (files?.video) {
@@ -342,8 +345,6 @@ const updateProfile = async (req: Request) => {
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
-
-
 
   // Step 2: Use transaction to update User and role-specific table
   const result = await prisma.$transaction(async (prisma) => {
