@@ -138,20 +138,23 @@ const getAllCourses = async (params: any, options: IPaginationOptions) => {
 
 // Get course by ID
 const getCourseById = async (courseId: string) => {
-  if (!courseId)
+  if (!courseId) {
     throw new ApiError(httpStatus.BAD_REQUEST, "courseId is required");
+  }
 
   const course = await prisma.course.findUnique({
     where: { id: courseId },
     include: {
-      // institute: true,
+      institute: true,
       Teacher: true,
+      // Fetch course reviews and their associated user and student data
       CourseReview: {
         include: {
           user: {
-            include:{
-              student: true
-            }
+            include: {
+              student: true,
+            
+            },
           },
         },
       },
@@ -162,8 +165,21 @@ const getCourseById = async (courseId: string) => {
     throw new ApiError(httpStatus.NOT_FOUND, "Course not found");
   }
 
-  return course;
+  // Calculate total review count and average rating
+  const totalReviews = course.CourseReview.length;
+  const averageRating =
+    totalReviews > 0
+      ? course.CourseReview.reduce((sum, review) => sum + review.rating, 0) / totalReviews
+      : 0;
+
+  // Return the course along with calculated values
+  return {
+    ...course,
+    totalReviews,
+    averageRating: parseFloat(averageRating.toFixed(1)), // Rounded to 1 decimal place
+  };
 };
+
 
 // Update course
 const updateCourse = async (req: Request) => {
