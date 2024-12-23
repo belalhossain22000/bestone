@@ -1,11 +1,12 @@
 // review.routes: Module file for the review.routes functionality.
 import express from "express";
 import { ReviewController } from "./review.controller";
+import auth from "../../middlewares/auth";
 
 const router = express.Router();
 
 // Route to create a new review
-router.post("/", ReviewController.createReview);
+router.post("/",auth(), ReviewController.createReview);
 
 
 // Route to get all reviews (with optional query parameters)

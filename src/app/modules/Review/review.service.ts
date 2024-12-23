@@ -5,9 +5,19 @@ import prisma from "../../../shared/prisma";
 import ApiError from "../../../errors/ApiErrors";
 import httpStatus from "http-status";
 
-const createReview = async (payload: CourseReview) => {
+const createReview = async (payload: CourseReview, user: any) => {
+  const isCourseExist = await prisma.course.findUnique({
+    where: { id: payload.courseId },
+  })
+  if (!isCourseExist) {
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      "Course not found with this" + " " + payload.courseId
+    );
+  }
+
   const result = await prisma.courseReview.create({
-    data: payload,
+    data: { ...payload, userId: user.id },
   });
   if (!result)
     throw new ApiError(

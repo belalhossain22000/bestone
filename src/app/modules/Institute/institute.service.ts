@@ -8,11 +8,10 @@ import { Prisma } from "@prisma/client";
 
 // Get all institutes
 const getAllInstitutes = async (params: any, options: IPaginationOptions) => {
-  
   const { page, limit, skip } = paginationHelper.calculatePagination(options);
   const { searchTerm, ...filterData } = params;
   const andConditions: Prisma.InstituteWhereInput[] = [];
-  //console.log(filterData);
+
   if (params.searchTerm) {
     andConditions.push({
       OR: instituteSearchAbleFields.map((field) => ({
@@ -37,25 +36,45 @@ const getAllInstitutes = async (params: any, options: IPaginationOptions) => {
   const whereConditions: Prisma.InstituteWhereInput =
     andConditions.length > 0 ? { AND: andConditions } : {};
 
-  const result = await prisma.institute.findMany({
+  // Fetch institutes along with their courses and reviews
+  const institutes = await prisma.institute.findMany({
     where: whereConditions,
     skip,
     take: limit,
-    orderBy:
-      options.sortBy && options.sortOrder
-        ? {
-            [options.sortBy]: options.sortOrder,
-          }
-        : {
-            createdAt: "desc",
-          },
-    // select: {
-    //   id: true,
-    //   email: true,
-    //   address: true,
-    // },
+    include: {
+      course: {
+        include: {
+          CourseReview: true, // Include course reviews for calculating rating and total reviews
+        },
+      },
+    },
   });
 
+  // Map institute data to extract required details
+  const instituteData = institutes.map((institute) => {
+    // Calculate total reviews and average rating
+    const allReviews = institute.course.flatMap((course) => course.CourseReview);
+    const totalReviews = allReviews.length;
+    const averageRating =
+      totalReviews > 0
+        ? allReviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews
+        : 0;
+
+    return {
+      name: institute.name,
+      id: institute.id,
+      // tagline: institute.tagline || "No tagline provided", // Optional tagline field
+      profileImage: institute.profileImage,
+      averageRating: parseFloat(averageRating.toFixed(1)),
+      // totalReviews,
+      address: institute.address,
+    };
+  });
+
+  // Sort by average rating in descending order
+  const sortedInstitutes = instituteData.sort((a, b) => b.averageRating - a.averageRating);
+
+  // Get total count of institutes
   const total = await prisma.institute.count({
     where: whereConditions,
   });
@@ -66,9 +85,11 @@ const getAllInstitutes = async (params: any, options: IPaginationOptions) => {
       limit,
       total,
     },
-    data: result,
+    data: sortedInstitutes,
   };
 };
+
+
 
 // Get institute by ID
 const getInstituteById = async (id: string) => {

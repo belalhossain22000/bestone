@@ -84,7 +84,8 @@ const getAllCourses = async (params: any, options: IPaginationOptions) => {
   const whereConditons: Prisma.CourseWhereInput =
     andCondions.length > 0 ? { AND: andCondions } : {};
 
-  const result = await prisma.course.findMany({
+  // Fetch courses with related data
+  const courses = await prisma.course.findMany({
     where: whereConditons,
     skip,
     take: limit,
@@ -96,13 +97,30 @@ const getAllCourses = async (params: any, options: IPaginationOptions) => {
         : {
             createdAt: "desc",
           },
-    // include:{
-    //   Category:true,
-    //   Teacher:true,
-    //   institute:true
-    // }
+    include: {
+      institute: true,
+      // CourseReview: true,
+    },
   });
 
+  // Calculate average rating and total review count for each course
+  const coursesWithRatings = await Promise.all(
+    courses.map(async (course) => {
+      const reviewStats = await prisma.courseReview.aggregate({
+        where: { courseId: course.id },
+        _avg: { rating: true }, // Calculate average rating
+        _count: { rating: true }, // Calculate total reviews
+      });
+
+      return {
+        ...course,
+        averageRating: reviewStats._avg.rating || 0, // Default to 0 if no reviews
+        totalReviews: reviewStats._count.rating || 0, // Default to 0 if no reviews
+      };
+    })
+  );
+
+  // Get total count of courses
   const total = await prisma.course.count({
     where: whereConditons,
   });
@@ -113,9 +131,10 @@ const getAllCourses = async (params: any, options: IPaginationOptions) => {
       limit,
       total,
     },
-    data: result,
+    data: coursesWithRatings,
   };
 };
+
 
 // Get course by ID
 const getCourseById = async (courseId: string) => {
@@ -124,6 +143,10 @@ const getCourseById = async (courseId: string) => {
 
   const course = await prisma.course.findUnique({
     where: { id: courseId },
+    include: {
+      // institute: true,
+      CourseReview: true,
+    },
   });
 
   if (!course) {
@@ -219,7 +242,7 @@ const recommendCoursesByInterest = async (userId: string) => {
     throw new ApiError(httpStatus.BAD_REQUEST, "Student interest is not valid");
   }
 
-  console.log("Student Interests:", interests);
+
 
   // Find courses based on interests
   const matchedCourses = await prisma.course.findMany({
