@@ -208,31 +208,54 @@ const updateCourse = async (req: Request) => {
   return result;
 };
 
-// Get courses by institute
+
+// get course by institute
 const getCoursesByInstitute = async (instituteId: string) => {
-  const result = await prisma.course.findMany({
+  const courses = await prisma.course.findMany({
     where: { instituteId },
-    include:{
-      Teacher:{
-        select:{
-          id:true,
-          name:true,
-          email:true,
-          profileImage:true
-        }
-      }
-    }
+    include: {
+      Teacher: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          profileImage: true,
+        },
+      },
+      CourseReview: {
+        select: {
+          rating: true,
+        },
+      },
+    },
   });
 
-  if (!result) {
+  if (!courses || courses.length === 0) {
     throw new ApiError(
       httpStatus.NOT_FOUND,
       "No courses found for this institute"
     );
   }
 
-  return result;
+  // Add average rating and total reviews for each course
+  const enrichedCourses = courses.map((course) => {
+    const totalReviews = course.CourseReview.length;
+    const avgRating =
+      totalReviews > 0
+        ? course.CourseReview.reduce((sum, review) => sum + review.rating, 0) /
+          totalReviews
+        : 0;
+
+    return {
+      ...course,
+      avgRating: parseFloat(avgRating.toFixed(2)), // Round to 2 decimal places
+      totalReviews,
+    };
+  });
+
+  return enrichedCourses;
 };
+
 
 // Get courses by teacher
 const getCoursesByTeacher = async (teacherId: string) => {

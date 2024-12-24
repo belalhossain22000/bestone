@@ -124,7 +124,69 @@ const getPaymentMethodList = async (user: any) => {
   return studentPaymentMethodList;
 };
 
+// Get payment history for a student
+const getPaymentHistory = async (user: any) => {
+  const student = await prisma.student.findUnique({
+    where: { email: user.email },
+  });
+
+  if (!student || !student.stripeCustomerId) {
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      "Student or Stripe customer not found"
+    );
+  }
+
+  const paymentHistory = await prisma.payment.findMany({
+    where: {
+      studentId: student.id,
+    },
+  });
+
+  if (!paymentHistory) {
+    throw new ApiError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      "Failed to fetch payment history"
+    );
+  }
+
+  return paymentHistory;
+};
+
+// Get single payment details
+const getPaymentDetails = async (paymentId: string) => {
+  try {
+    const paymentDetails = await prisma.payment.findMany({
+      where: {
+        id: paymentId,
+      },
+      include: {
+        student:true,
+        course: {
+          include: {
+            institute: true,
+            Teacher: true,
+          },
+        },
+      },
+    });
+
+    if (!paymentDetails) {
+      throw new ApiError(httpStatus.NOT_FOUND, "Payment not found");
+    }
+
+    return paymentDetails;
+  } catch (error) {
+    throw new ApiError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      "Failed to fetch payment details"
+    );
+  }
+};
+
 export const stripeService = {
   createPaymentIntent,
   getPaymentMethodList,
+  getPaymentHistory,
+  getPaymentDetails,
 };

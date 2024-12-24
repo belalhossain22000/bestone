@@ -8,7 +8,7 @@ import httpStatus from "http-status";
 
 // Get all institutes
 const createPaymentIntent = catchAsync(async (req: Request, res: Response) => {
-  const result = await stripeService.createPaymentIntent(req.body,req.user);
+  const result = await stripeService.createPaymentIntent(req.body, req.user);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -28,7 +28,31 @@ const getPaymentMethodList = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// Get payment history for a student
+const getPaymentHistory = catchAsync(async (req: Request, res: Response) => {
+  const result = await stripeService.getPaymentHistory(req.user);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Payment history retrieved successfully!",
+    data: result,
+  });
+});
+
+// Get single payment details
+const getPaymentDetails = catchAsync(async (req: Request, res: Response) => {
+  const result = await stripeService.getPaymentDetails(req.params.paymentId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Payment details retrieved successfully!",
+    data: result,
+  });
+});
+
 export const StripeController = {
   createPaymentIntent,
-  getPaymentMethodList
+  getPaymentMethodList,
+  getPaymentHistory,
+  getPaymentDetails,
 };
