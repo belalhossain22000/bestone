@@ -321,7 +321,7 @@ const getUsersFromDb = async (params: any, options: IPaginationOptions) => {
 // update profile by user won profile uisng token or email and id
 const updateProfile = async (req: Request) => {
   const files = req.files as any;
-  console.log(files);
+  // console.log(files);
   let payload: any = {};
   if (req.body.body) {
     payload = JSON.parse(req.body.body);
