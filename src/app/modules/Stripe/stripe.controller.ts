@@ -41,7 +41,7 @@ const getPaymentHistory = catchAsync(async (req: Request, res: Response) => {
 
 // Get single payment details
 const getPaymentDetails = catchAsync(async (req: Request, res: Response) => {
-  const result = await stripeService.getPaymentDetails(req.params.paymentId);
+  const result = await stripeService.getPaymentDetails(req.params.paymentId,req.user);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,

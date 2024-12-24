@@ -70,7 +70,7 @@ const createPaymentIntent = async (payload: any, user: any) => {
           courseId,
           amount,
           currency: "USD",
-          status: "PENDING",
+          status: "SUCCESS",
           paymentIntentId: paymentIntent.id,
         },
       }),
@@ -154,14 +154,18 @@ const getPaymentHistory = async (user: any) => {
 };
 
 // Get single payment details
-const getPaymentDetails = async (paymentId: string) => {
+const getPaymentDetails = async (paymentId: string, user: any) => {
   try {
+    const student = await prisma.student.findUnique({
+      where: { email: user.email },
+    });
+
     const paymentDetails = await prisma.payment.findMany({
       where: {
         id: paymentId,
       },
       include: {
-        student:true,
+        student: true,
         course: {
           include: {
             institute: true,
@@ -174,8 +178,33 @@ const getPaymentDetails = async (paymentId: string) => {
     if (!paymentDetails) {
       throw new ApiError(httpStatus.NOT_FOUND, "Payment not found");
     }
+    if (!student || !student.stripeCustomerId) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "Student does not have a Stripe customer ID."
+      );
+    }
 
-    return paymentDetails;
+    const paymentMethods = await stripe.paymentMethods.list({
+      customer: student.stripeCustomerId,
+      type: "card",
+    });
+    if (!paymentMethods) {
+      throw new ApiError(
+        httpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to fetch payment methods"
+      );
+    }
+
+    const cardDetails = paymentMethods.data.map((method) => ({
+      last4: method.card?.last4,
+      brand: method.card?.brand,
+    }));
+
+    return {
+      paymentDetails,
+      cardDetails,
+    };
   } catch (error) {
     throw new ApiError(
       httpStatus.INTERNAL_SERVER_ERROR,
