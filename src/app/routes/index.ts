@@ -10,6 +10,7 @@ import { InstituteRoutes } from "../modules/Institute/institute.routes";
 import { AdminRoutes } from "../modules/Admin/admin.routes";
 import { OfferedCourseRoutes } from "../modules/OfferedCourse/offeredCourse.routes";
 import { favouriteRoutes } from "../modules/favourite/favourite.route";
+import { StripeRoutes } from "../modules/Stripe/stripe.routes";
 
 const router = express.Router();
 
@@ -57,6 +58,10 @@ const moduleRoutes = [
   {
     path: "/favorites",
     route: favouriteRoutes,
+  },
+  {
+    path: "/payments",
+    route: StripeRoutes,
   },
 ];
 
