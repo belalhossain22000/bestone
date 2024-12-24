@@ -28,20 +28,21 @@ model User {
 }
 
 model Student {
-  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
   name             String
-  email            String   @unique
+  email            String    @unique
   username         String?
   phoneNumber      String?
   profileImage     String?
   institute        String?
   interest         Json?
-  referredId       String?  @unique
-  coin             Int?     @default(0)
+  referredId       String?   @unique
+  coin             Int?      @default(0)
   stripeCustomerId String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  user             User     @relation(fields: [email], references: [email])
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  user             User      @relation(fields: [email], references: [email])
+  Payment          Payment[]
 
   @@map("Students")
 }
@@ -137,6 +138,7 @@ model Course {
   updatedAt          DateTime         @updatedAt
   CourseReview       CourseReview[]
   OfferedCourses     OfferedCourses[]
+  Payment            Payment[]
 
   @@map("Courses")
 }
@@ -176,6 +178,48 @@ model Favorite {
   institute   Institute @relation(fields: [instituteId], references: [id])
 
   @@map("Favorites")
+}
+
+model Payment {
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  studentId       String        @db.ObjectId
+  student         Student       @relation(fields: [studentId], references: [id])
+  courseId        String        @db.ObjectId
+  course          Course        @relation(fields: [courseId], references: [id])
+  amount          Float
+  currency        String        @default("USD")
+  status          PaymentStatus @default(PENDING)
+  paymentIntentId String        @unique
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  Refund          Refund[]
+
+  @@map("Payments")
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+model Refund {
+  id        String       @id @default(auto()) @map("_id") @db.ObjectId
+  paymentId String       @db.ObjectId
+  payment   Payment      @relation(fields: [paymentId], references: [id])
+  amount    Float
+  status    RefundStatus @default(PENDING)
+  reason    String?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@map("Refunds")
+}
+
+enum RefundStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum UserRole {

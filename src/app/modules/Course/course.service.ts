@@ -212,6 +212,16 @@ const updateCourse = async (req: Request) => {
 const getCoursesByInstitute = async (instituteId: string) => {
   const result = await prisma.course.findMany({
     where: { instituteId },
+    include:{
+      Teacher:{
+        select:{
+          id:true,
+          name:true,
+          email:true,
+          profileImage:true
+        }
+      }
+    }
   });
 
   if (!result) {

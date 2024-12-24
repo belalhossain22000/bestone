@@ -53,11 +53,14 @@ const getAllInstitutes = async (params: any, options: IPaginationOptions) => {
   // Map institute data to extract required details
   const instituteData = institutes.map((institute) => {
     // Calculate total reviews and average rating
-    const allReviews = institute.course.flatMap((course) => course.CourseReview);
+    const allReviews = institute.course.flatMap(
+      (course) => course.CourseReview
+    );
     const totalReviews = allReviews.length;
     const averageRating =
       totalReviews > 0
-        ? allReviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews
+        ? allReviews.reduce((sum, review) => sum + review.rating, 0) /
+          totalReviews
         : 0;
 
     return {
@@ -67,11 +70,14 @@ const getAllInstitutes = async (params: any, options: IPaginationOptions) => {
       averageRating: parseFloat(averageRating.toFixed(1)), // Average rating
       totalReviews, // Total number of reviews (rating count)
       address: institute.address,
+      about: institute.about,
     };
   });
 
   // Sort by average rating in descending order
-  const sortedInstitutes = instituteData.sort((a, b) => b.averageRating - a.averageRating);
+  const sortedInstitutes = instituteData.sort(
+    (a, b) => b.averageRating - a.averageRating
+  );
 
   // Get total count of institutes
   const total = await prisma.institute.count({
@@ -88,18 +94,38 @@ const getAllInstitutes = async (params: any, options: IPaginationOptions) => {
   };
 };
 
-
-
 // Get institute by ID
 const getInstituteById = async (id: string) => {
   const institute = await prisma.institute.findUnique({
     where: { id },
+    include: {
+      course: {
+        include: {
+          CourseReview: true, // Include reviews for each course
+        },
+      },
+    },
   });
+
   if (!institute) {
     throw new ApiError(httpStatus.NOT_FOUND, "Institute not found");
   }
-  return institute;
+
+  // Calculate total courses and total reviews
+  const totalCourses = institute.course.length;
+
+  const totalReviews = institute.course.reduce(
+    (sum, course) => sum + course.CourseReview.length,
+    0
+  );
+
+  return {
+    ...institute,
+    totalCourses,
+    totalReviews,
+  };
 };
+
 
 // Get institute with associated courses
 const getInstituteWithCourses = async (id: string) => {
