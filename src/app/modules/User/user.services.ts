@@ -327,6 +327,13 @@ const updateProfile = async (req: Request) => {
     payload = JSON.parse(req.body.body);
   }
 
+  if (!payload || Object.keys(payload).length === 0) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Payload is empty");
+  }
+  
+
+
+
   // Add profile image URL to payload if file exists
   if (files?.image) {
     payload.profileImage = `${config.backend_base_url}/uploads/${files.image[0].originalname}`;

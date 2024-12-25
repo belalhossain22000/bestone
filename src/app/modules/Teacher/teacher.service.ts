@@ -73,12 +73,35 @@ const getTeachers = async (params: any, options: IPaginationOptions) => {
 const getTeacherById = async (id: string) => {
   const teacher = await prisma.teacher.findUnique({
     where: { id },
+    include: {
+      course: {
+        include: {
+          CourseReview: true, // Include reviews for each course
+        },
+      },
+    },
   });
+
   if (!teacher) {
     throw new ApiError(httpStatus.NOT_FOUND, "Teacher not found");
   }
-  return teacher;
+
+  // Calculate total courses
+  const totalCourses = teacher.course.length;
+
+  // Calculate total reviews
+  let totalReviews = 0;
+  teacher.course.forEach((course) => {
+    totalReviews += course.CourseReview.length;
+  });
+
+  return {
+    teacher,
+    totalCourses,
+    totalReviews,
+  };
 };
+
 
 // Get teacher by institute
 const getTeacherByInstitute = async (instituteId: string) => {

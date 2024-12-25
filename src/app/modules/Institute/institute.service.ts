@@ -95,6 +95,7 @@ const getAllInstitutes = async (params: any, options: IPaginationOptions) => {
 };
 
 // Get institute by ID
+// Get institute by ID
 const getInstituteById = async (id: string) => {
   const institute = await prisma.institute.findUnique({
     where: { id },
@@ -102,6 +103,11 @@ const getInstituteById = async (id: string) => {
       course: {
         include: {
           CourseReview: true, // Include reviews for each course
+          Payment: {
+            include: {
+              student: true, // Include student details if needed
+            },
+          },
         },
       },
     },
@@ -111,20 +117,33 @@ const getInstituteById = async (id: string) => {
     throw new ApiError(httpStatus.NOT_FOUND, "Institute not found");
   }
 
-  // Calculate total courses and total reviews
+  // Calculate total courses
   const totalCourses = institute.course.length;
 
+  // Calculate total reviews
   const totalReviews = institute.course.reduce(
     (sum, course) => sum + course.CourseReview.length,
     0
   );
 
+  // Calculate total students enrolled in any course under the institute
+  const enrolledStudentIds = new Set<string>(); // Use a set to avoid duplicates
+  institute.course.forEach((course) => {
+    course.Payment.forEach((payment) => {
+      enrolledStudentIds.add(payment.studentId); // Add each studentId
+    });
+  });
+
+  const totalStudents = enrolledStudentIds.size; // Get unique count
+
   return {
     ...institute,
     totalCourses,
     totalReviews,
+    totalStudents, // Add total students to the response
   };
 };
+
 
 
 // Get institute with associated courses

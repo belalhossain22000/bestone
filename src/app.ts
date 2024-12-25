@@ -6,11 +6,13 @@ import cookieParser from "cookie-parser";
 import GlobalErrorHandler from "./app/middlewares/globalErrorHandler";
 import router from "./app/routes";
 
-
-
 const app: Application = express();
 export const corsOptions = {
-  origin: ["http://localhost:3001", "http://localhost:3000"],
+  origin: [
+    "http://localhost:3001",
+    "http://localhost:3000",
+    "http://localhost:5173",
+  ],
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
@@ -27,7 +29,7 @@ app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 // Route handler for root endpoint
 app.get("/", (req: Request, res: Response) => {
   res.send({
-    success:true,
+    success: true,
     statusCode: httpStatus.OK,
     message: "Hi Developers!",
   });

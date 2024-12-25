@@ -66,9 +66,12 @@ model Teacher {
   instituteId       String
   username          String?
   phoneNumber       String?
+  phoneNumbers      String[] @default([])
   profileImage      String?
   yearsOfExperience Int?
+  experiences       Json?
   locations         String?
+  address           String?
   about             String?
   spicialities      String?
   createdAt         DateTime @default(now())
@@ -86,6 +89,8 @@ model Institute {
   phone           String?
   address         String?
   about           String?
+  phoneNumbers    String[] @default([])
+  officeVisitTime Json?
   specializations String?
   video           String?
   profileImage    String?

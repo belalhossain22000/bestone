@@ -259,19 +259,54 @@ const getCoursesByInstitute = async (instituteId: string) => {
 
 // Get courses by teacher
 const getCoursesByTeacher = async (teacherId: string) => {
-  const result = await prisma.course.findMany({
+  const courses = await prisma.course.findMany({
     where: { teacherId },
+    include: {
+      CourseReview: true, // Include reviews for each course
+      institute: {
+        select: {
+          name: true, // Include the institute name
+        },
+      },
+    },
   });
 
-  if (!result) {
-    throw new ApiError(
-      httpStatus.NOT_FOUND,
-      "No courses found for this teacher"
-    );
+  if (!courses || courses.length === 0) {
+    throw new Error("No courses found for this teacher.");
   }
 
-  return result;
+  // Aggregate total reviews and calculate average rating
+  let totalReviews = 0;
+  let totalRating = 0;
+
+  courses.forEach((course) => {
+    const courseReviews = course.CourseReview;
+    totalReviews += courseReviews.length; // Total number of reviews
+    totalRating += courseReviews.reduce((sum, review) => sum + review.rating, 0); // Sum of all ratings
+  });
+
+  const avgRating = totalReviews > 0 ? (totalRating / totalReviews).toFixed(1) : 0;
+
+  // Transform the result
+  const transformedCourses = courses.map((course) => ({
+    id: course.id,
+    title: course.title,
+    description: course.description,
+    duration: course.duration,
+    lessons: course.lessons,
+    thumbUrl: course.thumbUrl,
+    reviews: course.CourseReview.length, // Total reviews for the course
+    institute: course.institute?.name || "Unknown",
+  }));
+
+  return {
+    teacherId,
+    courses: transformedCourses,
+    totalReviews,
+    avgRating,
+  };
 };
+
 
 // Recommend courses by interest
 const recommendCoursesByInterest = async (userId: string) => {
