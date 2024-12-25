@@ -44,12 +44,14 @@ const getAllInstitutes = async (params: any, options: IPaginationOptions) => {
     include: {
       course: {
         include: {
-          CourseReview: true, // Include course reviews for calculating rating and total reviews
+          CourseReview: true,
         },
       },
+      Teacher: true,
     },
   });
-
+  // return institutes;
+  // console.log(institutes);
   // Map institute data to extract required details
   const instituteData = institutes.map((institute) => {
     // Calculate total reviews and average rating
@@ -62,15 +64,22 @@ const getAllInstitutes = async (params: any, options: IPaginationOptions) => {
         ? allReviews.reduce((sum, review) => sum + review.rating, 0) /
           totalReviews
         : 0;
+    // Number of courses
+    const totalCourses = institute?.course?.length ?? 0;
+
+    const totalTeachers = institute?.Teacher?.length ?? 0;
 
     return {
       id: institute.id,
       name: institute.name,
+      email: institute.email,
       profileImage: institute.profileImage,
       averageRating: parseFloat(averageRating.toFixed(1)), // Average rating
       totalReviews, // Total number of reviews (rating count)
       address: institute.address,
       about: institute.about,
+      totalTeachers,
+      totalCourses,
     };
   });
 
@@ -143,8 +152,6 @@ const getInstituteById = async (id: string) => {
     totalStudents, // Add total students to the response
   };
 };
-
-
 
 // Get institute with associated courses
 const getInstituteWithCourses = async (id: string) => {

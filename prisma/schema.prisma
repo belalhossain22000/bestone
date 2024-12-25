@@ -60,13 +60,13 @@ model Admin {
 }
 
 model Teacher {
-  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
   name              String
-  email             String   @unique
-  instituteId       String
+  email             String    @unique
+  instituteId       String    @db.ObjectId
   username          String?
   phoneNumber       String?
-  phoneNumbers      String[] @default([])
+  phoneNumbers      String[]  @default([])
   profileImage      String?
   yearsOfExperience Int?
   experiences       Json?
@@ -74,9 +74,10 @@ model Teacher {
   address           String?
   about             String?
   spicialities      String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  user              User     @relation(fields: [email], references: [email])
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  user              User      @relation(fields: [email], references: [email])
+  institutes        Institute @relation(fields: [instituteId], references: [id])
   course            Course[]
 
   @@map("Teachers")
@@ -102,6 +103,7 @@ model Institute {
 
   course   Course[]
   Favorite Favorite[]
+  Teacher  Teacher[]
 
   @@map("Institutes")
 }
