@@ -365,6 +365,7 @@ const recommendCoursesByInterest = async (userId: string) => {
       title: course.title,
       price: course.price,
       description: course.description,
+      thumbUrl:course.thumbUrl, 
       institute: {
         id: course.institute.id,
         name: course.institute.name,
@@ -397,6 +398,7 @@ const recommendCoursesByInterest = async (userId: string) => {
         title: course.title,
         price: course.price,
         description: course.description,
+        thumbUrl:course.thumbUrl,
         institute: {
           id: course.institute.id,
           name: course.institute.name,

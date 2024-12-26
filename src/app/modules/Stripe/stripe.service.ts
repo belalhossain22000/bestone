@@ -9,6 +9,8 @@ import prisma from "../../../shared/prisma";
 const createPaymentIntent = async (payload: any, user: any) => {
   const { amount, courseId, paymentMethodId } = payload;
 
+  // console.log(payload);
+
   if (!amount || !courseId || !paymentMethodId) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Missing required parameters");
   }
@@ -85,6 +87,11 @@ const createPaymentIntent = async (payload: any, user: any) => {
     // Return the client secret for the payment
     return { clientSecret: paymentIntent.client_secret };
   } catch (error: any) {
+    if (error.message) {
+      throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
+    }
+    console.log(error);
+
     if (error.type === "StripeCardError") {
       throw new ApiError(httpStatus.BAD_REQUEST, error.message);
     }
