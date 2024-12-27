@@ -189,8 +189,8 @@ model Favorite {
 
 model Payment {
   id              String        @id @default(auto()) @map("_id") @db.ObjectId
-  studentId       String        @db.ObjectId
-  student         Student       @relation(fields: [studentId], references: [id])
+  userEmail       String
+  student         Student       @relation(fields: [userEmail], references: [email])
   courseId        String        @db.ObjectId
   course          Course        @relation(fields: [courseId], references: [id])
   amount          Float

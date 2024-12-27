@@ -135,7 +135,6 @@ const getAllCourses = async (params: any, options: IPaginationOptions) => {
   };
 };
 
-
 // Get course by ID
 const getCourseById = async (courseId: string) => {
   if (!courseId) {
@@ -153,7 +152,6 @@ const getCourseById = async (courseId: string) => {
           user: {
             include: {
               student: true,
-            
             },
           },
         },
@@ -169,7 +167,8 @@ const getCourseById = async (courseId: string) => {
   const totalReviews = course.CourseReview.length;
   const averageRating =
     totalReviews > 0
-      ? course.CourseReview.reduce((sum, review) => sum + review.rating, 0) / totalReviews
+      ? course.CourseReview.reduce((sum, review) => sum + review.rating, 0) /
+        totalReviews
       : 0;
 
   // Return the course along with calculated values
@@ -179,7 +178,6 @@ const getCourseById = async (courseId: string) => {
     averageRating: parseFloat(averageRating.toFixed(1)), // Rounded to 1 decimal place
   };
 };
-
 
 // Update course
 const updateCourse = async (req: Request) => {
@@ -207,7 +205,6 @@ const updateCourse = async (req: Request) => {
 
   return result;
 };
-
 
 // get course by institute
 const getCoursesByInstitute = async (instituteId: string) => {
@@ -256,7 +253,6 @@ const getCoursesByInstitute = async (instituteId: string) => {
   return enrichedCourses;
 };
 
-
 // Get courses by teacher
 const getCoursesByTeacher = async (teacherId: string) => {
   const courses = await prisma.course.findMany({
@@ -282,10 +278,14 @@ const getCoursesByTeacher = async (teacherId: string) => {
   courses.forEach((course) => {
     const courseReviews = course.CourseReview;
     totalReviews += courseReviews.length; // Total number of reviews
-    totalRating += courseReviews.reduce((sum, review) => sum + review.rating, 0); // Sum of all ratings
+    totalRating += courseReviews.reduce(
+      (sum, review) => sum + review.rating,
+      0
+    ); // Sum of all ratings
   });
 
-  const avgRating = totalReviews > 0 ? (totalRating / totalReviews).toFixed(1) : 0;
+  const avgRating =
+    totalReviews > 0 ? (totalRating / totalReviews).toFixed(1) : 0;
 
   // Transform the result
   const transformedCourses = courses.map((course) => ({
@@ -306,7 +306,6 @@ const getCoursesByTeacher = async (teacherId: string) => {
     avgRating,
   };
 };
-
 
 // Recommend courses by interest
 const recommendCoursesByInterest = async (userId: string) => {
@@ -357,7 +356,8 @@ const recommendCoursesByInterest = async (userId: string) => {
     const totalReviews = course.CourseReview.length;
     const averageRating =
       totalReviews > 0
-        ? course.CourseReview.reduce((sum, review) => sum + review.rating, 0) / totalReviews
+        ? course.CourseReview.reduce((sum, review) => sum + review.rating, 0) /
+          totalReviews
         : 0;
 
     return {
@@ -365,7 +365,7 @@ const recommendCoursesByInterest = async (userId: string) => {
       title: course.title,
       price: course.price,
       description: course.description,
-      thumbUrl:course.thumbUrl, 
+      thumbUrl: course.thumbUrl,
       institute: {
         id: course.institute.id,
         name: course.institute.name,
@@ -390,7 +390,10 @@ const recommendCoursesByInterest = async (userId: string) => {
       const totalReviews = course.CourseReview.length;
       const averageRating =
         totalReviews > 0
-          ? course.CourseReview.reduce((sum, review) => sum + review.rating, 0) / totalReviews
+          ? course.CourseReview.reduce(
+              (sum, review) => sum + review.rating,
+              0
+            ) / totalReviews
           : 0;
 
       return {
@@ -398,7 +401,7 @@ const recommendCoursesByInterest = async (userId: string) => {
         title: course.title,
         price: course.price,
         description: course.description,
-        thumbUrl:course.thumbUrl,
+        thumbUrl: course.thumbUrl,
         institute: {
           id: course.institute.id,
           name: course.institute.name,
@@ -410,7 +413,8 @@ const recommendCoursesByInterest = async (userId: string) => {
     });
 
     return {
-      message: "No courses matched your interests. Here are some recommendations:",
+      message:
+        "No courses matched your interests. Here are some recommendations:",
       courses: fallbackCoursesWithRatings,
     };
   }
@@ -421,7 +425,6 @@ const recommendCoursesByInterest = async (userId: string) => {
     courses: coursesWithRatings,
   };
 };
-
 
 // Delete course
 const deleteCourse = async (courseId: string) => {
@@ -440,6 +443,27 @@ const deleteCourse = async (courseId: string) => {
   return result;
 };
 
+const getMyCourses = async (user: any) => {
+  const result = await prisma.payment.findMany({
+    where: {
+      userEmail: user.email,
+    },
+    include: {
+      course: {
+        include: {
+          institute: true,
+        },
+      },
+    },
+  });
+
+  if (!result || result.length === 0) {
+    throw new ApiError(httpStatus.NOT_FOUND, "No courses found");
+  }
+
+  return result;
+};
+
 // Export the CourseService
 export const CourseService = {
   createCourse,
@@ -449,5 +473,6 @@ export const CourseService = {
   deleteCourse,
   getCoursesByInstitute,
   getCoursesByTeacher,
-  recommendCoursesByInterest
+  recommendCoursesByInterest,
+  getMyCourses,
 };

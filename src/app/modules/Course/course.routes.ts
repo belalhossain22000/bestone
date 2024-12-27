@@ -5,7 +5,6 @@ import { fileUploader } from "../../../helpars/fileUploader";
 import auth from "../../middlewares/auth";
 import { UserRole } from "@prisma/client";
 
-
 const router = express.Router();
 
 // Create a new course (with file upload middleware)
@@ -13,14 +12,21 @@ router.post("/", fileUploader.uploadSingle, CourseController.createCourse);
 
 // Get all courses (with optional filters via query parameters)
 router.get("/", CourseController.getAllCourses);
+// Get all courses (with optional filters via query parameters)
+
 // Recommend courses by interest
 router.get(
   "/recommendations",
   auth(),
   CourseController.recommendCoursesByInterest
 );
+// get my all courses
+router.get("/my-course", auth(), CourseController.getMyCourses);
+
 // Get a specific course by ID
 router.get("/:id", CourseController.getCourseById);
+
+
 // Get courses by institute
 router.get(
   "/institute/:instituteId",
@@ -30,9 +36,9 @@ router.get(
 
 // Get courses by teacher
 router.get(
-"/teacher/:teacherId",
-// auth(UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT),
-CourseController.getCoursesByTeacher
+  "/teacher/:teacherId",
+  // auth(UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT),
+  CourseController.getCoursesByTeacher
 );
 
 // Update a specific course by ID (with file upload middleware)

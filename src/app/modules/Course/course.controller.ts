@@ -103,6 +103,17 @@ const deleteCourse = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// Delete a course by ID
+const getMyCourses = catchAsync(async (req: Request, res: Response) => {
+  const result = await CourseService.getMyCourses(req.user);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Course retrieve successfully!",
+    data: result,
+  });
+});
+
 // Export all controllers
 export const CourseController = {
   createCourse,
@@ -113,4 +124,5 @@ export const CourseController = {
   getCoursesByInstitute,
   getCoursesByTeacher,
   recommendCoursesByInterest,
+  getMyCourses,
 };

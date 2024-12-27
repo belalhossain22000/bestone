@@ -55,20 +55,20 @@ const createPaymentIntent = async (payload: any, user: any) => {
 
     // Create a Stripe PaymentIntent
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Convert amount to cents
-      currency: "usd", // Use constants for currencies
+      amount: Math.round(amount * 100),
+      currency: "usd",
       customer: student.stripeCustomerId,
       payment_method: paymentMethod.id,
       description: `Payment for course: ${isCourseExist.title || courseId}`,
       confirm: true,
-      off_session: true, // For automatic payments
+      off_session: true,
     });
 
     // Use Prisma transaction for database consistency
     await prisma.$transaction([
       prisma.payment.create({
         data: {
-          studentId: student.id,
+          userEmail: student.email,
           courseId,
           amount,
           currency: "USD",
@@ -84,8 +84,12 @@ const createPaymentIntent = async (payload: any, user: any) => {
       }),
     ]);
 
+    // console.log(paymentIntent);
     // Return the client secret for the payment
-    return { clientSecret: paymentIntent.client_secret };
+    return {
+      status: paymentIntent.status,
+      transactionId: paymentIntent.latest_charge,
+    };
   } catch (error: any) {
     if (error.message) {
       throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
@@ -146,7 +150,7 @@ const getPaymentHistory = async (user: any) => {
 
   const paymentHistory = await prisma.payment.findMany({
     where: {
-      studentId: student.id,
+      userEmail: student.email ,
     },
   });
 
