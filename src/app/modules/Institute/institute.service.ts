@@ -9,14 +9,15 @@ import { Prisma } from "@prisma/client";
 // Get all institutes
 const getAllInstitutes = async (params: any, options: IPaginationOptions) => {
   const { page, limit, skip } = paginationHelper.calculatePagination(options);
-  const { searchTerm, ...filterData } = params;
+  const { searchTerm, latitude, longitude, maxDistance, ...filterData } = params; 
+  console.log(latitude,longitude,maxDistance);
   const andConditions: Prisma.InstituteWhereInput[] = [];
 
-  if (params.searchTerm) {
+  if (searchTerm) {
     andConditions.push({
       OR: instituteSearchAbleFields.map((field) => ({
         [field]: {
-          contains: params.searchTerm,
+          contains: searchTerm,
           mode: "insensitive",
         },
       })),
@@ -36,11 +37,9 @@ const getAllInstitutes = async (params: any, options: IPaginationOptions) => {
   const whereConditions: Prisma.InstituteWhereInput =
     andConditions.length > 0 ? { AND: andConditions } : {};
 
-  // Fetch institutes along with their courses and reviews
+  // Fetch all institutes to filter by distance
   const institutes = await prisma.institute.findMany({
     where: whereConditions,
-    skip,
-    take: limit,
     include: {
       course: {
         include: {
@@ -50,10 +49,41 @@ const getAllInstitutes = async (params: any, options: IPaginationOptions) => {
       Teacher: true,
     },
   });
-  // return institutes;
-  // console.log(institutes);
+
+  // Filter by distance if latitude and longitude are provided
+  let filteredInstitutes = institutes;
+  if (latitude && longitude && maxDistance) {
+    const EARTH_RADIUS_KM = 6371; // Earth's radius in kilometers
+
+    filteredInstitutes = institutes.filter((institute) => {
+      if (institute.latitude && institute.longitude) {
+        const lat1 = parseFloat(latitude);
+        const lon1 = parseFloat(longitude);
+        const lat2 = institute.latitude;
+        const lon2 = institute.longitude;
+
+        // Haversine formula
+        const dLat = ((lat2 - lat1) * Math.PI) / 180;
+        const dLon = ((lon2 - lon1) * Math.PI) / 180;
+
+        const a =
+          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos((lat1 * Math.PI) / 180) *
+            Math.cos((lat2 * Math.PI) / 180) *
+            Math.sin(dLon / 2) *
+            Math.sin(dLon / 2);
+
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distance = EARTH_RADIUS_KM * c; // Distance in kilometers
+
+        return distance <= parseFloat(maxDistance);
+      }
+      return false; // Exclude institutes without lat/long
+    });
+  }
+
   // Map institute data to extract required details
-  const instituteData = institutes.map((institute) => {
+  const instituteData = filteredInstitutes.map((institute) => {
     // Calculate total reviews and average rating
     const allReviews = institute.course.flatMap(
       (course) => course.CourseReview
@@ -64,9 +94,7 @@ const getAllInstitutes = async (params: any, options: IPaginationOptions) => {
         ? allReviews.reduce((sum, review) => sum + review.rating, 0) /
           totalReviews
         : 0;
-    // Number of courses
     const totalCourses = institute?.course?.length ?? 0;
-
     const totalTeachers = institute?.Teacher?.length ?? 0;
 
     return {
@@ -74,8 +102,8 @@ const getAllInstitutes = async (params: any, options: IPaginationOptions) => {
       name: institute.name,
       email: institute.email,
       profileImage: institute.profileImage,
-      averageRating: parseFloat(averageRating.toFixed(1)), // Average rating
-      totalReviews, // Total number of reviews (rating count)
+      averageRating: parseFloat(averageRating.toFixed(1)),
+      totalReviews,
       address: institute.address,
       about: institute.about,
       totalTeachers,
@@ -88,10 +116,11 @@ const getAllInstitutes = async (params: any, options: IPaginationOptions) => {
     (a, b) => b.averageRating - a.averageRating
   );
 
-  // Get total count of institutes
-  const total = await prisma.institute.count({
-    where: whereConditions,
-  });
+  // Paginate results
+  const paginatedInstitutes = sortedInstitutes.slice(skip, skip + limit);
+
+  // Get total count of institutes after location filtering
+  const total = filteredInstitutes.length;
 
   return {
     meta: {
@@ -99,9 +128,11 @@ const getAllInstitutes = async (params: any, options: IPaginationOptions) => {
       limit,
       total,
     },
-    data: sortedInstitutes,
+    data: paginatedInstitutes,
   };
 };
+
+
 
 // Get institute by ID
 // Get institute by ID
@@ -139,7 +170,7 @@ const getInstituteById = async (id: string) => {
   const enrolledStudentIds = new Set<string>(); // Use a set to avoid duplicates
   institute.course.forEach((course) => {
     course.Payment.forEach((payment) => {
-      enrolledStudentIds.add(payment.studentId); // Add each studentId
+      enrolledStudentIds.add(payment.userEmail); // Add each studentId
     });
   });
 

@@ -341,11 +341,11 @@ const updateProfile = async (req: Request) => {
 
   // Add profile image URL to payload if file exists
   if (files?.image) {
-    payload.profileImage = await uploadToDigitalOceanAWS(files.image[0]);
+    payload.profileImage = (await uploadToDigitalOceanAWS(files.image[0])).Location;
   }
   // console.log(payload);
   if (files?.video) {
-    payload.video = await uploadToDigitalOceanAWS(files.video[0]);
+    payload.video = (await uploadToDigitalOceanAWS(files.video[0])).Location;
   }
 
   const { email, id, role } = req.user;
@@ -359,6 +359,7 @@ const updateProfile = async (req: Request) => {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
 
+  console.log(payload);
   // Step 2: Use transaction to update User and role-specific table
   const result = await prisma.$transaction(async (prisma) => {
     // Update User table email if it exists in the payload
