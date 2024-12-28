@@ -7,7 +7,6 @@ import pick from "../../../shared/pick";
 import { userFilterableFields } from "./user.costant";
 
 const createStudent = catchAsync(async (req: Request, res: Response) => {
-
   const result = await userService.createStudent(req.body);
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -64,7 +63,6 @@ const getUsers = catchAsync(async (req: Request, res: Response) => {
 // get all user form db
 const updateProfile = catchAsync(
   async (req: Request & { user?: any }, res: Response) => {
-
     const result = await userService.updateProfile(req);
     sendResponse(res, {
       statusCode: httpStatus.OK,
@@ -87,6 +85,17 @@ const updateUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// *! update user role and account status
+const deleteUser = catchAsync(async (req: Request, res: Response) => {
+  const result = await userService.deleteUser(req.params.id);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "User deleted successfully!",
+    data: result,
+  });
+});
+
 export const userController = {
   createStudent,
   createTeacher,
@@ -95,4 +104,5 @@ export const userController = {
   getUsers,
   updateProfile,
   updateUser,
+  deleteUser,
 };

@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from "uuid";
 
 import { AuthServices } from "../Auth/auth.service";
 import stripe from "../../../helpars/stripe";
+import { uploadToDigitalOceanAWS } from "../../../helpars/fileUploadAws";
 
 //*! Create a new student in the database.
 const createStudent = async (payload: Student & any) => {
@@ -103,7 +104,10 @@ const createTeacher = async (req: Request) => {
   let payload = JSON.parse(req.body.body);
 
   if (file) {
-    payload.teacher.profileImage = `${config.backend_base_url}/uploads/${file.originalname}`;
+    // payload.teacher.profileImage = `${config.backend_base_url}/uploads/${file.originalname}`;
+    payload.teacher.profileImage = (
+      await uploadToDigitalOceanAWS(req.file!)
+    ).Location;
   }
 
   const isUserExist = await prisma.user.findUnique({
@@ -204,8 +208,12 @@ const createInstitute = async (req: Request) => {
   const files = req.files as any;
   let payload = JSON.parse(req.body.body);
   if (files) {
-    payload.institute.profileImage = `${config.backend_base_url}/uploads/${files.image[0].originalname}`;
-    payload.institute.video = `${config.backend_base_url}/uploads/${files.video[0].originalname}`;
+    payload.institute.profileImage = (
+      await uploadToDigitalOceanAWS(files.image[0])
+    ).Location;
+    payload.institute.video = (
+      await uploadToDigitalOceanAWS(files.video[0])
+    ).Location;
   }
 
   // console.log(payload.institute);
@@ -330,17 +338,14 @@ const updateProfile = async (req: Request) => {
   if (!payload || Object.keys(payload).length === 0) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Payload is empty");
   }
-  
-
-
 
   // Add profile image URL to payload if file exists
   if (files?.image) {
-    payload.profileImage = `${config.backend_base_url}/uploads/${files.image[0].originalname}`;
+    payload.profileImage = await uploadToDigitalOceanAWS(files.image[0]);
   }
   // console.log(payload);
   if (files?.video) {
-    payload.video = `${config.backend_base_url}/uploads/${files.video[0].originalname}`;
+    payload.video = await uploadToDigitalOceanAWS(files.video[0]);
   }
 
   const { email, id, role } = req.user;
@@ -455,6 +460,84 @@ const updateUserIntoDb = async (payload: IUser, id: string) => {
   return result;
 };
 
+// Delete user from database
+
+export const deleteUser = async (userId: string): Promise<void> => {
+  try {
+    // Start the transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // Find the user by ID
+      const user = await tx.user.findUnique({
+        where: { id: userId },
+        include: {
+          admin: true, // Include related Admin to check the relation
+          teacher: true, // Include Teacher relation
+          institute: true, // Include Institute relation
+          student: true, // Include Student relation
+        },
+      });
+      console.log(user);
+
+      if (!user) {
+        throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+      }
+
+      // Delete related models based on role or relations
+      if (user.admin) {
+        await tx.admin.delete({
+          where: { email: user.email },
+        });
+      }
+
+      if (user.teacher.length > 0) {
+        await tx.teacher.deleteMany({
+          where: { email: user.email },
+        });
+      }
+
+      if (user.institute.length > 0) {
+        await tx.institute.deleteMany({
+          where: { email: user.email },
+        });
+      }
+
+      if (user.student.length > 0) {
+        await tx.student.deleteMany({
+          where: { email: user.email },
+        });
+      }
+
+      // Delete associated data (e.g., Favorites, Payments, Course Reviews)
+      await tx.favorite.deleteMany({
+        where: { userId: userId },
+      });
+
+      await tx.payment.deleteMany({
+        where: { userEmail: user.email },
+      });
+
+      await tx.courseReview.deleteMany({
+        where: { userId: userId },
+      });
+
+      // Finally, delete the user
+      await tx.user.delete({
+        where: { id: userId },
+      });
+
+      console.log(
+        `User with ID ${userId} and related data deleted successfully.`
+      );
+    });
+    return result;
+  } catch (error: any) {
+    console.error(`Transaction failed. Rolled back changes: ${error.message}`);
+    throw new Error(`Failed to delete user: ${error.message}`);
+  } finally {
+    await prisma.$disconnect();
+  }
+};
+
 export const userService = {
   createStudent,
   createInstitute,
@@ -463,4 +546,5 @@ export const userService = {
   getUsersFromDb,
   updateProfile,
   updateUserIntoDb,
+  deleteUser,
 };

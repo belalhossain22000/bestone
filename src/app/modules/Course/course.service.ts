@@ -8,13 +8,16 @@ import { IPaginationOptions } from "../../../interfaces/paginations";
 import { paginationHelper } from "../../../helpars/paginationHelper";
 import { Prisma } from "@prisma/client";
 import { courseSearchAbleFields } from "./course.constant";
+import { uploadToDigitalOceanAWS } from "../../../helpars/fileUploadAws";
 
 // Create a new course
 const createCourse = async (req: Request) => {
   if (!req.file)
     throw new ApiError(httpStatus.NOT_FOUND, "Thumbnail image is required");
 
-  const thumbUrl = `${config.backend_base_url}/uploads/${req.file?.originalname}`;
+  const image = await uploadToDigitalOceanAWS(req.file);
+
+  // const thumbUrl = `${config.backend_base_url}/uploads/${req.file?.originalname}`;
   const payload = JSON.parse(req.body.body);
 
   const isCourseExist = await prisma.course.findUnique({
@@ -48,7 +51,7 @@ const createCourse = async (req: Request) => {
     );
 
   const result = await prisma.course.create({
-    data: { ...payload, thumbUrl },
+    data: { ...payload, thumbUrl: image.Location },
   });
 
   return result;
@@ -99,6 +102,9 @@ const getAllCourses = async (params: any, options: IPaginationOptions) => {
           },
     include: {
       institute: true,
+      Teacher: true,
+      Payment: true,
+
       // CourseReview: true,
     },
   });
@@ -182,9 +188,13 @@ const getCourseById = async (courseId: string) => {
 // Update course
 const updateCourse = async (req: Request) => {
   const courseId = req.params.id;
-  const thumbUrl = req.file
-    ? `${config.backend_base_url}/uploads/${req.file.originalname}`
-    : undefined;
+
+  const image = await uploadToDigitalOceanAWS(req.file!);
+
+  // const thumbUrl = req.file
+  //   ? `${config.backend_base_url}/uploads/${req.file.originalname}`
+  //   : undefined;
+  const thumbUrl = image?.Location!;
 
   const payload = req.body.body ? JSON.parse(req.body.body) : {};
 
@@ -365,6 +375,8 @@ const recommendCoursesByInterest = async (userId: string) => {
       title: course.title,
       price: course.price,
       description: course.description,
+      startDate: course.startDate,
+      endDate: course.endDate,
       thumbUrl: course.thumbUrl,
       institute: {
         id: course.institute.id,
@@ -401,6 +413,8 @@ const recommendCoursesByInterest = async (userId: string) => {
         title: course.title,
         price: course.price,
         description: course.description,
+        startDate: course.startDate,
+        endDate: course.endDate,
         thumbUrl: course.thumbUrl,
         institute: {
           id: course.institute.id,

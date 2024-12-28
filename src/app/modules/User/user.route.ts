@@ -54,4 +54,6 @@ router.put(
 // *!update  user
 router.put("/:id", userController.updateUser);
 
+router.delete("/:id", userController.deleteUser);
+
 export const userRoutes = router;
