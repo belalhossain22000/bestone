@@ -462,7 +462,7 @@ const updateUserIntoDb = async (payload: IUser, id: string) => {
 
 // Delete user from database
 
-export const deleteUser = async (userId: string): Promise<void> => {
+ const deleteUser = async (userId: string): Promise<void> => {
   try {
     // Start the transaction
     const result = await prisma.$transaction(async (tx) => {
@@ -476,7 +476,7 @@ export const deleteUser = async (userId: string): Promise<void> => {
           student: true, // Include Student relation
         },
       });
-      console.log(user);
+   
 
       if (!user) {
         throw new ApiError(httpStatus.NOT_FOUND, "User not found");
@@ -525,16 +525,14 @@ export const deleteUser = async (userId: string): Promise<void> => {
         where: { id: userId },
       });
 
-      console.log(
-        `User with ID ${userId} and related data deleted successfully.`
-      );
+     
     });
     return result;
   } catch (error: any) {
-    console.error(`Transaction failed. Rolled back changes: ${error.message}`);
-    throw new Error(`Failed to delete user: ${error.message}`);
-  } finally {
-    await prisma.$disconnect();
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      `Transaction failed. Rolled back changes: ${error.message}`
+    );
   }
 };
 

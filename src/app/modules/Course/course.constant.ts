@@ -1,3 +1,3 @@
-export const courseFilterableFields = ["title","categoryId", "searchTerm"];
+export const courseFilterableFields = ["title","categoryId", "searchTerm","language"];
 
-export const courseSearchAbleFields = ["title"];
+export const courseSearchAbleFields = ["title","language"];

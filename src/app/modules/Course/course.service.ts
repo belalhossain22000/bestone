@@ -94,9 +94,11 @@ const getAllCourses = async (params: any, options: IPaginationOptions) => {
     take: limit,
     orderBy:
       options.sortBy && options.sortOrder
-        ? {
-            [options.sortBy]: options.sortOrder,
-          }
+        ? options.sortBy === "averageRating"
+          ? undefined // We'll handle rating sorting later
+          : {
+              [options.sortBy]: options.sortOrder,
+            }
         : {
             createdAt: "desc",
           },
@@ -104,8 +106,6 @@ const getAllCourses = async (params: any, options: IPaginationOptions) => {
       institute: true,
       Teacher: true,
       Payment: true,
-
-      // CourseReview: true,
     },
   });
 
@@ -114,17 +114,28 @@ const getAllCourses = async (params: any, options: IPaginationOptions) => {
     courses.map(async (course) => {
       const reviewStats = await prisma.courseReview.aggregate({
         where: { courseId: course.id },
-        _avg: { rating: true }, // Calculate average rating
-        _count: { rating: true }, // Calculate total reviews
+        _avg: { rating: true },
+        _count: { rating: true },
       });
 
       return {
         ...course,
-        averageRating: reviewStats._avg.rating || 0, // Default to 0 if no reviews
-        totalReviews: reviewStats._count.rating || 0, // Default to 0 if no reviews
+        averageRating: reviewStats._avg.rating || 0,
+        totalReviews: reviewStats._count.rating || 0,
       };
     })
   );
+
+  // Sort by rating if specified
+  if (options.sortBy === "averageRating") {
+    coursesWithRatings.sort((a, b) => {
+      if (options.sortOrder === "asc") {
+        return a.averageRating - b.averageRating;
+      } else {
+        return b.averageRating - a.averageRating;
+      }
+    });
+  }
 
   // Get total count of courses
   const total = await prisma.course.count({

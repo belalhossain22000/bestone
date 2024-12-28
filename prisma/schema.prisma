@@ -8,21 +8,22 @@ datasource db {
 }
 
 model User {
-  id           String         @id @default(auto()) @map("_id") @db.ObjectId
-  email        String         @unique
-  password     String
-  role         UserRole       @default(STUDENT)
-  otp          String?
-  otpExpiresAt DateTime?
-  status       UserStatus     @default(ACTIVE)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  student      Student[]
-  teacher      Teacher[]
-  CourseReview CourseReview[]
-  institute    Institute[]
-  admin        Admin?
-  Favorite     Favorite[]
+  id               String             @id @default(auto()) @map("_id") @db.ObjectId
+  email            String             @unique
+  password         String
+  role             UserRole           @default(STUDENT)
+  otp              String?
+  otpExpiresAt     DateTime?
+  status           UserStatus         @default(ACTIVE)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  student          Student[]
+  teacher          Teacher[]
+  CourseReview     CourseReview[]
+  institute        Institute[]
+  admin            Admin?
+  Favorite         Favorite[]
+  CourseCompletion CourseCompletion[]
 
   @@map("Users")
 }
@@ -73,7 +74,7 @@ model Teacher {
   locations         String?
   address           String?
   about             String?
-  spicialities      String?
+  specialties      String?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   user              User      @relation(fields: [email], references: [email])
@@ -115,9 +116,15 @@ model Category {
   Course   Course[]
 }
 
+model InstituteType {
+  id     String   @id @default(auto()) @map("_id") @db.ObjectId
+  name   String   @unique
+  course Course[]
+}
+
 model Course {
-  id                 String           @id @default(auto()) @map("_id") @db.ObjectId
-  title              String           @unique
+  id                 String             @id @default(auto()) @map("_id") @db.ObjectId
+  title              String             @unique
   startDate          DateTime
   endDate            DateTime
   description        String
@@ -135,19 +142,43 @@ model Course {
   availableSeats     Int
   certificateOffered Boolean
   internshipSupport  Boolean
-  teacherId          String           @db.ObjectId
-  Teacher            Teacher          @relation(fields: [teacherId], references: [id])
-  categoryId         String           @db.ObjectId
-  Category           Category         @relation(fields: [categoryId], references: [id])
-  instituteId        String           @db.ObjectId
-  institute          Institute        @relation(fields: [instituteId], references: [id])
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
+  teacherId          String             @db.ObjectId
+  Teacher            Teacher            @relation(fields: [teacherId], references: [id])
+  categoryId         String             @db.ObjectId
+  Category           Category           @relation(fields: [categoryId], references: [id])
+  instituteId        String             @db.ObjectId
+  institute          Institute          @relation(fields: [instituteId], references: [id])
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
   CourseReview       CourseReview[]
   OfferedCourses     OfferedCourses[]
   Payment            Payment[]
+  instituteTypeId    String?            @db.ObjectId
+  InstituteType      InstituteType?     @relation(fields: [instituteTypeId], references: [id])
+  CourseCompletion   CourseCompletion[]
 
   @@map("Courses")
+}
+
+model CourseCompletion {
+  id          String           @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String           @db.ObjectId
+  user        User             @relation(fields: [userId], references: [id]) 
+  courseId    String           @db.ObjectId
+  course      Course           @relation(fields: [courseId], references: [id])
+  status      CompletionStatus @default(NOT_STARTED) 
+  progress    Float            @default(0.0) 
+  completedAt DateTime? 
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@map("CourseCompletions")
+}
+
+enum CompletionStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
 }
 
 model OfferedCourses {

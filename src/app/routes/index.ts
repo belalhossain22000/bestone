@@ -11,6 +11,7 @@ import { AdminRoutes } from "../modules/Admin/admin.routes";
 import { OfferedCourseRoutes } from "../modules/OfferedCourse/offeredCourse.routes";
 import { favouriteRoutes } from "../modules/favourite/favourite.route";
 import { StripeRoutes } from "../modules/Stripe/stripe.routes";
+import { InstituteTypeRoutes } from "../modules/InstituteType/instituteType.routes";
 
 const router = express.Router();
 
@@ -62,6 +63,10 @@ const moduleRoutes = [
   {
     path: "/payments",
     route: StripeRoutes,
+  },
+  {
+    path: "/instituteTypes",
+    route: InstituteTypeRoutes,
   },
 ];
 
