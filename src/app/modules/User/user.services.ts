@@ -207,6 +207,8 @@ const createAdmin = async (payload: any) => {
 const createInstitute = async (req: Request) => {
   const files = req.files as any;
   let payload = JSON.parse(req.body.body);
+  console.log(payload);
+
   if (files) {
     payload.institute.profileImage = (
       await uploadToDigitalOceanAWS(files.image[0])
@@ -215,7 +217,7 @@ const createInstitute = async (req: Request) => {
       await uploadToDigitalOceanAWS(files.video[0])
     ).Location;
   }
-
+  console.log(payload);
   // console.log(payload.institute);
   const isUserExist = await prisma.user.findUnique({
     where: { email: payload.institute.email },
@@ -335,17 +337,19 @@ const updateProfile = async (req: Request) => {
     payload = JSON.parse(req.body.body);
   }
 
-  if (!payload || Object.keys(payload).length === 0) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Payload is empty");
-  }
-
   // Add profile image URL to payload if file exists
   if (files?.image) {
-    payload.profileImage = (await uploadToDigitalOceanAWS(files.image[0])).Location;
+    payload.profileImage = (
+      await uploadToDigitalOceanAWS(files.image[0])
+    ).Location;
   }
   // console.log(payload);
   if (files?.video) {
     payload.video = (await uploadToDigitalOceanAWS(files.video[0])).Location;
+  }
+
+  if (!payload || Object.keys(payload).length === 0) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Payload is empty");
   }
 
   const { email, id, role } = req.user;
@@ -359,7 +363,7 @@ const updateProfile = async (req: Request) => {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
 
-  console.log(payload);
+
   // Step 2: Use transaction to update User and role-specific table
   const result = await prisma.$transaction(async (prisma) => {
     // Update User table email if it exists in the payload
@@ -463,7 +467,7 @@ const updateUserIntoDb = async (payload: IUser, id: string) => {
 
 // Delete user from database
 
- const deleteUser = async (userId: string): Promise<void> => {
+const deleteUser = async (userId: string): Promise<void> => {
   try {
     // Start the transaction
     const result = await prisma.$transaction(async (tx) => {
@@ -477,7 +481,6 @@ const updateUserIntoDb = async (payload: IUser, id: string) => {
           student: true, // Include Student relation
         },
       });
-   
 
       if (!user) {
         throw new ApiError(httpStatus.NOT_FOUND, "User not found");
@@ -485,25 +488,25 @@ const updateUserIntoDb = async (payload: IUser, id: string) => {
 
       // Delete related models based on role or relations
       if (user.admin) {
-        await tx.admin.delete({
+        const result = await tx.admin.delete({
           where: { email: user.email },
         });
       }
 
       if (user.teacher.length > 0) {
-        await tx.teacher.deleteMany({
+        const result = await tx.teacher.deleteMany({
           where: { email: user.email },
         });
       }
 
       if (user.institute.length > 0) {
-        await tx.institute.deleteMany({
+        const result = await tx.institute.deleteMany({
           where: { email: user.email },
         });
       }
 
       if (user.student.length > 0) {
-        await tx.student.deleteMany({
+        const result = await tx.student.deleteMany({
           where: { email: user.email },
         });
       }
@@ -525,11 +528,10 @@ const updateUserIntoDb = async (payload: IUser, id: string) => {
       await tx.user.delete({
         where: { id: userId },
       });
-
-     
     });
     return result;
   } catch (error: any) {
+    console.log(error);
     throw new ApiError(
       httpStatus.NOT_FOUND,
       `Transaction failed. Rolled back changes: ${error.message}`

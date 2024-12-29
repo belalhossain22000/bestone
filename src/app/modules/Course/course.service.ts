@@ -482,9 +482,9 @@ const getMyCourses = async (user: any) => {
     },
   });
 
-  if (!result || result.length === 0) {
-    throw new ApiError(httpStatus.NOT_FOUND, "No courses found");
-  }
+  // if (!result || result.length === 0) {
+  //   throw new ApiError(httpStatus.NOT_FOUND, "No courses found");
+  // }
 
   return result;
 };

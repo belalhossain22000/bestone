@@ -76,6 +76,9 @@ const getTeacherById = async (id: string) => {
     include: {
       course: {
         include: {
+          institute: true, // Include institute for each course
+          Payment: true, // Include payment for each course
+          
           CourseReview: true, // Include reviews for each course
         },
       },

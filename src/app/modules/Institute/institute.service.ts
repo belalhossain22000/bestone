@@ -9,8 +9,9 @@ import { Prisma } from "@prisma/client";
 // Get all institutes
 const getAllInstitutes = async (params: any, options: IPaginationOptions) => {
   const { page, limit, skip } = paginationHelper.calculatePagination(options);
-  const { searchTerm, latitude, longitude, maxDistance, ...filterData } = params; 
-  console.log(latitude,longitude,maxDistance);
+  const { searchTerm, latitude, longitude, maxDistance, ...filterData } =
+    params;
+  // console.log(latitude, longitude, maxDistance);
   const andConditions: Prisma.InstituteWhereInput[] = [];
 
   if (searchTerm) {
@@ -41,6 +42,7 @@ const getAllInstitutes = async (params: any, options: IPaginationOptions) => {
   const institutes = await prisma.institute.findMany({
     where: whereConditions,
     include: {
+      user: true,
       course: {
         include: {
           CourseReview: true,
@@ -99,8 +101,12 @@ const getAllInstitutes = async (params: any, options: IPaginationOptions) => {
 
     return {
       id: institute.id,
+      userid:institute.user.id,
       name: institute.name,
       email: institute.email,
+      latitude: institute.latitude,
+      longitude: institute.longitude,
+      phoneNumbers: institute.phoneNumbers,
       profileImage: institute.profileImage,
       averageRating: parseFloat(averageRating.toFixed(1)),
       totalReviews,
@@ -132,8 +138,6 @@ const getAllInstitutes = async (params: any, options: IPaginationOptions) => {
   };
 };
 
-
-
 // Get institute by ID
 // Get institute by ID
 const getInstituteById = async (id: string) => {
@@ -142,10 +146,10 @@ const getInstituteById = async (id: string) => {
     include: {
       course: {
         include: {
-          CourseReview: true, // Include reviews for each course
+          CourseReview: true,
           Payment: {
             include: {
-              student: true, // Include student details if needed
+              student: true,
             },
           },
         },
