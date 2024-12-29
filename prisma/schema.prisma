@@ -171,7 +171,6 @@ model CourseCompletion {
   courseId    String           @db.ObjectId
   course      Course           @relation(fields: [courseId], references: [id])
   status      CompletionStatus @default(NOT_STARTED)
-  progress    Float            @default(0.0)
   completedAt DateTime?
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt

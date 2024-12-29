@@ -18,6 +18,10 @@ const createIssue = async (req: Request) => {
   if (file) {
     payload.image = (await uploadToDigitalOceanAWS(file)).Location;
   }
+
+  if (file && !payload.title) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Payload is empty");
+  }
   //   console.log(payload);
   try {
     const result = await prisma.issue.create({

@@ -4,12 +4,9 @@ import stripe from "../../../helpars/stripe";
 import prisma from "../../../shared/prisma";
 
 // stripe.service: Module file for the stripe.service functionality.
-// stripe.service: Module file for the stripe.service functionality.
 
 const createPaymentIntent = async (payload: any, user: any) => {
   const { amount, courseId, paymentMethodId } = payload;
-
-  // console.log(payload);
 
   if (!amount || !courseId || !paymentMethodId) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Missing required parameters");
@@ -65,8 +62,8 @@ const createPaymentIntent = async (payload: any, user: any) => {
     });
 
     // Use Prisma transaction for database consistency
-    await prisma.$transaction([
-      prisma.payment.create({
+    await prisma.$transaction(async (prisma) => {
+      await prisma.payment.create({
         data: {
           userEmail: student.email,
           courseId,
@@ -75,16 +72,24 @@ const createPaymentIntent = async (payload: any, user: any) => {
           status: "SUCCESS",
           paymentIntentId: paymentIntent.id,
         },
-      }),
-      prisma.course.update({
+      });
+
+      await prisma.course.update({
         where: { id: courseId },
         data: {
           availableSeats: isCourseExist.availableSeats - 1,
         },
-      }),
-    ]);
+      });
 
-    // console.log(paymentIntent);
+      await prisma.courseCompletion.create({
+        data: {
+          userId: student.id,
+          courseId,
+          status: "NOT_STARTED",
+        },
+      });
+    });
+
     // Return the client secret for the payment
     return {
       status: paymentIntent.status,
@@ -150,7 +155,7 @@ const getPaymentHistory = async (user: any) => {
 
   const paymentHistory = await prisma.payment.findMany({
     where: {
-      userEmail: student.email ,
+      userEmail: student.email,
     },
   });
 
