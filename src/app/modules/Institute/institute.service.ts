@@ -101,13 +101,15 @@ const getAllInstitutes = async (params: any, options: IPaginationOptions) => {
 
     return {
       id: institute.id,
-      userid:institute.user.id,
+      userid: institute.user.id,
       name: institute.name,
       email: institute.email,
       latitude: institute.latitude,
       longitude: institute.longitude,
+      officeVisitTime: institute.officeVisitTime,
       phoneNumbers: institute.phoneNumbers,
       profileImage: institute.profileImage,
+      instituteTypeId: institute.InstituteTypeId,
       averageRating: parseFloat(averageRating.toFixed(1)),
       totalReviews,
       address: institute.address,

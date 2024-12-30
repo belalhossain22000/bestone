@@ -1,3 +1,7 @@
-export const instituteFilterableFields = ["email", "searchTerm"];
+export const instituteFilterableFields = [
+  "email",
+  "searchTerm",
+  "InstituteTypeId",
+];
 
 export const instituteSearchAbleFields = ["email"];

@@ -13,6 +13,20 @@ const createPaymentIntent = async (payload: any, user: any) => {
   }
 
   try {
+    const isEnrolled = await prisma.payment.findFirst({
+      where: {
+        courseId: courseId,
+        userEmail: user.email,
+      },
+    });
+
+    if (isEnrolled) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "You have already enrolled in this course"
+      );
+    }
+
     // Find the student and ensure they have a Stripe customer ID
     const student = await prisma.student.findUnique({
       where: { email: user.email },
@@ -85,7 +99,7 @@ const createPaymentIntent = async (payload: any, user: any) => {
         data: {
           userId: student.id,
           courseId,
-          status: "NOT_STARTED",
+          status: "IN_PROGRESS",
         },
       });
     });
@@ -229,9 +243,26 @@ const getPaymentDetails = async (paymentId: string, user: any) => {
   }
 };
 
+// Refund amount to customer in the stripe
+const refundPaymentToCustomer = async (payload: {
+  paymentIntentId: string;
+}) => {
+  try {
+    // Refund the payment intent
+    const refund = await stripe.refunds.create({
+      payment_intent: payload?.paymentIntentId,
+    });
+
+    return refund;
+  } catch (error: any) {
+    throw new ApiError(httpStatus.BAD_REQUEST, error.message);
+  }
+};
+
 export const stripeService = {
   createPaymentIntent,
   getPaymentMethodList,
   getPaymentHistory,
   getPaymentDetails,
+  refundPaymentToCustomer
 };

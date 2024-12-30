@@ -52,7 +52,7 @@ router.put(
 );
 
 // *!update  user
-router.put("/:id", userController.updateUser);
+router.put("/:id", auth(UserRole.ADMIN,UserRole.SUPER_ADMIN,UserRole.INSTITUTE),fileUploader.uploadInstituteFile, userController.updateUser);
 
 router.delete("/:id", userController.deleteUser);
 

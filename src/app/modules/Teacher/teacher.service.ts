@@ -6,10 +6,8 @@ import { paginationHelper } from "../../../helpars/paginationHelper";
 import { Prisma } from "@prisma/client";
 import { teacherSearchAbleFields } from "./teacher.constant";
 
-
 // get all teacher search fields and filter and others
 const getTeachers = async (params: any, options: IPaginationOptions) => {
-  
   const { page, limit, skip } = paginationHelper.calculatePagination(options);
   const { searchTerm, ...filterData } = params;
   const andConditions: Prisma.TeacherWhereInput[] = [];
@@ -78,7 +76,7 @@ const getTeacherById = async (id: string) => {
         include: {
           institute: true, // Include institute for each course
           Payment: true, // Include payment for each course
-          
+
           CourseReview: true, // Include reviews for each course
         },
       },
@@ -105,15 +103,26 @@ const getTeacherById = async (id: string) => {
   };
 };
 
-
 // Get teacher by institute
 const getTeacherByInstitute = async (instituteId: string) => {
   const result = await prisma.teacher.findMany({
     where: { instituteId },
+    include: {
+      course: true,
+      user: {
+        select: {
+          id: true,
+          email: true,
+        },
+      },
+    },
   });
 
   if (!result) {
-    throw new ApiError(httpStatus.NOT_FOUND, "No teachers found for this institute");
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      "No teachers found for this institute"
+    );
   }
 
   return result;

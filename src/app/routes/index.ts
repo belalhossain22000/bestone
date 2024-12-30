@@ -14,6 +14,7 @@ import { StripeRoutes } from "../modules/Stripe/stripe.routes";
 import { InstituteTypeRoutes } from "../modules/InstituteType/instituteType.routes";
 import { IssueRoutes } from "../modules/Issue/issue.routes";
 import { CourseProgressRoutes } from "../modules/CourseProgress/courseProgress.routes";
+import { RefundRoutes } from "../modules/Refund/refund.routes";
 
 const router = express.Router();
 
@@ -77,6 +78,10 @@ const moduleRoutes = [
   {
     path: "/course-progress",
     route: CourseProgressRoutes,
+  },
+  {
+    path: "/refunds",
+    route: RefundRoutes,
   },
 ];
 

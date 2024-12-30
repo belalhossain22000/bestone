@@ -89,22 +89,24 @@ model Teacher {
 }
 
 model Institute {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
   name            String
-  email           String   @unique
+  email           String         @unique
   phone           String?
   address         String?
   about           String?
-  phoneNumbers    String[] @default([])
+  phoneNumbers    String[]       @default([])
   officeVisitTime Json?
   specializations String?
   video           String?
   profileImage    String?
   latitude        Float?
   longitude       Float?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  user            User     @relation(fields: [email], references: [email])
+  InstituteTypeId String?        @db.ObjectId
+  instituteType   InstituteType? @relation(fields: [InstituteTypeId], references: [id])
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  user            User           @relation(fields: [email], references: [email])
 
   course   Course[]
   Favorite Favorite[]
@@ -121,9 +123,10 @@ model Category {
 }
 
 model InstituteType {
-  id     String   @id @default(auto()) @map("_id") @db.ObjectId
-  name   String   @unique
-  course Course[]
+  id        String      @id @default(auto()) @map("_id") @db.ObjectId
+  name      String      @unique
+  course    Course[]
+  Institute Institute[]
 }
 
 model Course {
@@ -248,13 +251,19 @@ model Refund {
   id        String       @id @default(auto()) @map("_id") @db.ObjectId
   paymentId String       @db.ObjectId
   payment   Payment      @relation(fields: [paymentId], references: [id])
-  amount    Float
   status    RefundStatus @default(PENDING)
   reason    String?
+  message   String?
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 
   @@map("Refunds")
+}
+
+enum RefundStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum IssueStatus {
@@ -275,12 +284,6 @@ model Issue {
   updatedAt   DateTime    @updatedAt
 
   @@map("issues")
-}
-
-enum RefundStatus {
-  PENDING
-  APPROVED
-  REJECTED
 }
 
 enum UserRole {

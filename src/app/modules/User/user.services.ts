@@ -207,7 +207,7 @@ const createAdmin = async (payload: any) => {
 const createInstitute = async (req: Request) => {
   const files = req.files as any;
   let payload = JSON.parse(req.body.body);
-  console.log(payload);
+  // console.log(payload);
 
   if (files) {
     payload.institute.profileImage = (
@@ -217,7 +217,7 @@ const createInstitute = async (req: Request) => {
       await uploadToDigitalOceanAWS(files.video[0])
     ).Location;
   }
-  console.log(payload);
+  // console.log(payload);
   // console.log(payload.institute);
   const isUserExist = await prisma.user.findUnique({
     where: { email: payload.institute.email },
@@ -433,36 +433,107 @@ const updateProfile = async (req: Request) => {
 };
 
 // update user data into database by id fir admin
-const updateUserIntoDb = async (payload: IUser, id: string) => {
-  const userInfo = await prisma.user.findUnique({
-    where: {
-      id: id,
-    },
+const updateUserIntoDb = async (req:Request, id: string) => {
+  const files = req.files as any;
+  // console.log(files);
+  let payload: any = {};
+  if (req.body.body) {
+    payload = JSON.parse(req.body.body);
+  }
+
+  // Add profile image URL to payload if file exists
+  if (files?.image) {
+    payload.profileImage = (
+      await uploadToDigitalOceanAWS(files.image[0])
+    ).Location;
+  }
+  // console.log(payload);
+  if (files?.video) {
+    payload.video = (await uploadToDigitalOceanAWS(files.video[0])).Location;
+  }
+
+  if (!payload || Object.keys(payload).length === 0) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Payload is empty");
+  }
+
+  
+
+  // Step 1: Check if user exists
+  const user = await prisma.user.findUnique({
+    where: {  id },
   });
-  if (!userInfo)
-    throw new ApiError(httpStatus.NOT_FOUND, "User not found with id: " + id);
 
-  const result = await prisma.user.update({
-    where: {
-      id: userInfo.id,
-    },
-    data: payload,
-    select: {
-      id: true,
-      email: true,
-      role: true,
-      createdAt: true,
-      updatedAt: true,
-    },
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+
+  // Step 2: Use transaction to update User and role-specific table
+  const result = await prisma.$transaction(async (prisma) => {
+    // Update User table email if it exists in the payload
+    if (payload.email && payload.email !== user.email) {
+      const existingUserWithEmail = await prisma.user.findUnique({
+        where: { email: payload.email },
+      });
+
+      // if (existingUserWithEmail) {
+      //   throw new ApiError(httpStatus.BAD_REQUEST, "Email already in use");
+      // }
+
+      // Update the email in the User table
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { email: payload.email },
+      });
+
+      // Update the user's email reference
+      user.email = payload.email;
+    }
+
+    // Update role-specific table
+    let updatedProfile;
+
+    switch (user.role) {
+      case "STUDENT":
+        updatedProfile = await prisma.student.update({
+          where: { email: user.email },
+          data: payload,
+        });
+        break;
+
+      case "TEACHER":
+        updatedProfile = await prisma.teacher.update({
+          where: { email: user.email },
+          data: payload,
+        });
+        break;
+
+      case "INSTITUTE":
+        updatedProfile = await prisma.institute.update({
+          where: { email: user.email },
+          data: payload,
+        });
+        break;
+
+      case "ADMIN":
+        updatedProfile = await prisma.admin.update({
+          where: { email: user.email },
+          data: payload,
+        });
+        break;
+
+      default:
+        throw new ApiError(httpStatus.BAD_REQUEST, "Invalid user role");
+    }
+
+    return updatedProfile;
   });
 
-  if (!result)
-    throw new ApiError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      "Failed to update user profile"
-    );
-
-  return result;
+  // Step 3: Return updated profile
+  return {
+    message: "User updated successfully",
+    data: result,
+  };
 };
 
 // Delete user from database

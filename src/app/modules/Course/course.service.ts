@@ -106,6 +106,8 @@ const getAllCourses = async (params: any, options: IPaginationOptions) => {
       institute: true,
       Teacher: true,
       Payment: true,
+      Category: true,
+      InstituteType: true,
     },
   });
 
@@ -471,22 +473,57 @@ const deleteCourse = async (courseId: string) => {
 const getMyCourses = async (user: any) => {
   const result = await prisma.payment.findMany({
     where: {
-      userEmail: user.email,
+      userEmail: user.email, // Filter payments by the user's email
     },
     include: {
       course: {
         include: {
           institute: true,
+          CourseCompletion: true, // Include institute details for each course
         },
       },
     },
   });
 
-  // if (!result || result.length === 0) {
-  //   throw new ApiError(httpStatus.NOT_FOUND, "No courses found");
-  // }
+  if (!result || result.length === 0) {
+    throw new ApiError(httpStatus.NOT_FOUND, "No courses found for this user");
+  }
 
-  return result;
+  // Map the result to include payment information and related course details
+  const coursesWithPayments = result.map((payment) => ({
+    paymentId: payment.id,
+    paymentStatus: payment.status,
+    paymentAmount: payment.amount,
+    paymentCurrency: payment.currency,
+    paymentDate: payment.createdAt,
+    course: {
+      id: payment.course.id,
+      title: payment.course.title,
+      description: payment.course.description,
+      startDate: payment.course.startDate,
+      endDate: payment.course.endDate,
+      lessons: payment.course.lessons,
+      language: payment.course.language,
+      classTime: payment.course.classTime,
+      courseDays: payment.course.courseDays,
+      duration: payment.course.duration,
+      courseHours: payment.course.courseHours,
+      level: payment.course.level,
+      whatYouWillLearn: payment.course.whatYouWillLearn,
+      price: payment.course.price,
+      thumbUrl: payment.course.thumbUrl,
+      availableSeats: payment.course.availableSeats,
+      certificateOffered: payment.course.certificateOffered,
+      internshipSupport: payment.course.internshipSupport,
+      teacherId: payment.course.teacherId,
+      institute: payment.course.institute,
+      createdAt: payment.course.createdAt,
+      updatedAt: payment.course.updatedAt,
+      courseCompletion: payment.course.CourseCompletion,
+    },
+  }));
+
+  return coursesWithPayments;
 };
 
 // Export the CourseService
