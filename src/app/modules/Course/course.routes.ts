@@ -42,7 +42,7 @@ router.get(
 );
 
 // Update a specific course by ID (with file upload middleware)
-router.patch("/:id", fileUploader.uploadSingle, CourseController.updateCourse);
+router.put("/:id", fileUploader.uploadSingle, CourseController.updateCourse);
 
 // Delete a specific course by ID
 router.delete("/:id", CourseController.deleteCourse);

@@ -18,7 +18,7 @@ async function main() {
     if (server) {
       server.close(() => {
         console.info("Server closed!");
-        restartServer(); 
+        // restartServer(); 
       });
     } else {
       process.exit(1);

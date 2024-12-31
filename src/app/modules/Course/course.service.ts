@@ -9,6 +9,7 @@ import { paginationHelper } from "../../../helpars/paginationHelper";
 import { Prisma } from "@prisma/client";
 import { courseSearchAbleFields } from "./course.constant";
 import { uploadToDigitalOceanAWS } from "../../../helpars/fileUploadAws";
+import { log } from "console";
 
 // Create a new course
 const createCourse = async (req: Request) => {
@@ -201,17 +202,14 @@ const getCourseById = async (courseId: string) => {
 // Update course
 const updateCourse = async (req: Request) => {
   const courseId = req.params.id;
-
-  const image = await uploadToDigitalOceanAWS(req.file!);
-
-  // const thumbUrl = req.file
-  //   ? `${config.backend_base_url}/uploads/${req.file.originalname}`
-  //   : undefined;
-  const thumbUrl = image?.Location!;
+  let thumbUrl;
+  if (req.file) {
+    thumbUrl = (await uploadToDigitalOceanAWS(req.file!)).Location;
+  }
 
   const payload = req.body.body ? JSON.parse(req.body.body) : {};
 
-  if (req.file) payload.thumbUrl = thumbUrl;
+  if (thumbUrl) payload.thumbUrl = thumbUrl;
 
   const isCourseExist = await prisma.course.findUnique({
     where: { id: courseId },
@@ -476,6 +474,7 @@ const getMyCourses = async (user: any) => {
       userEmail: user.email, // Filter payments by the user's email
     },
     include: {
+      Refund: true,
       course: {
         include: {
           institute: true,
@@ -484,6 +483,7 @@ const getMyCourses = async (user: any) => {
       },
     },
   });
+
 
   if (!result || result.length === 0) {
     throw new ApiError(httpStatus.NOT_FOUND, "No courses found for this user");
@@ -520,6 +520,7 @@ const getMyCourses = async (user: any) => {
       createdAt: payment.course.createdAt,
       updatedAt: payment.course.updatedAt,
       courseCompletion: payment.course.CourseCompletion,
+      refund: payment.Refund
     },
   }));
 
