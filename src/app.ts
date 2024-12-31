@@ -12,7 +12,8 @@ export const corsOptions = {
     "http://localhost:3001",
     "http://localhost:3000",
     "http://localhost:5173",
-    "https://e-learning-with-next-client-for-bestesone-tau.vercel.app"
+    "https://e-learning-with-next-client-for-bestesone-tau.vercel.app",
+    "https://e-learning-dashboard-basestone.vercel.app"
   ],
   methods: ["GET", "POST", "PUT","PATCH", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
