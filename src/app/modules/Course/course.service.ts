@@ -282,7 +282,8 @@ const getCoursesByTeacher = async (teacherId: string) => {
       CourseReview: true, // Include reviews for each course
       institute: {
         select: {
-          name: true, // Include the institute name
+          name: true,
+          profileImage:true // Include the institute name
         },
       },
     },
@@ -318,6 +319,7 @@ const getCoursesByTeacher = async (teacherId: string) => {
     thumbUrl: course.thumbUrl,
     reviews: course.CourseReview.length, // Total reviews for the course
     institute: course.institute?.name || "Unknown",
+    profileImage: course.institute?.profileImage || null,
   }));
 
   return {

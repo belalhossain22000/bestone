@@ -50,7 +50,11 @@ const getOfferedCourseById = async (id: string) => {
 // Get all offered courses
 const getAllOfferedCourses = async () => {
   const result = await prisma.offeredCourses.findMany({
-    include: { course: true },
+    include: { course: {
+      include:{
+        institute:true
+      }
+    } },
   });
 
   if (!result) {
