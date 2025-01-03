@@ -54,7 +54,7 @@ const updateOfferedCourse = catchAsync(async (req: Request, res: Response) => {
 const deleteOfferedCourse = catchAsync(async (req: Request, res: Response) => {
   const result=await OfferedCourseService.deleteOfferedCourse(req.params.id);
   sendResponse(res, {
-    statusCode: httpStatus.NO_CONTENT,
+    statusCode: httpStatus.OK,
     success: true,
     message: "Offered course deleted successfully!",
     data: result,
