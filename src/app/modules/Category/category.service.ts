@@ -6,6 +6,7 @@ import ApiError from "../../../errors/ApiErrors";
 import httpStatus from "http-status";
 import { Request } from "express";
 import config from "../../../config";
+import { uploadToDigitalOceanAWS } from "../../../helpars/fileUploadAws";
 
 // Create a category
 const createCategoryIntoDb = async (req: Request) => {
@@ -14,7 +15,7 @@ const createCategoryIntoDb = async (req: Request) => {
   }
   const payload = JSON.parse(req.body.body);
 
-  const imageUrl = `${config.backend_base_url}/uploads/${req.file?.originalname}`;
+  const imageUrl = (await uploadToDigitalOceanAWS(req.file)).Location;
 
   const isCategoryExist = await prisma.category.findUnique({
     where: {
@@ -82,7 +83,7 @@ const updateCategoryById = async (req: Request) => {
   const id = req.params.id;
   let payload = JSON.parse(req.body.body);
   if (req.file) {
-    payload.imageUrl = `${config.backend_base_url}/uploads/${req.file?.originalname}`;
+    payload.imageUrl = (await uploadToDigitalOceanAWS(req.file)).Location;
   }
   if (!id)
     throw new ApiError(httpStatus.NOT_ACCEPTABLE, "Category id is requered");
